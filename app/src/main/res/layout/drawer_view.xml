@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/windowBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:id="@+id/inbox"
+            style="@style/DrawerRow">
+
+            <ImageView
+                android:id="@+id/inboxIcon"
+                style="@style/DrawerIcon"
+                android:src="@drawable/ic_inbox_black_24dp"
+                tools:tint="@color/tools_theme" />
+
+            <TextView
+                style="@style/DrawerText"
+                android:text="@string/drawer_inbox" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/archived"
+            style="@style/DrawerRow">
+
+            <ImageView
+                android:id="@+id/archivedIcon"
+                style="@style/DrawerIcon"
+                android:src="@drawable/ic_archive_black_24dp"
+                tools:tint="?android:attr/textColorSecondary" />
+
+            <TextView
+                style="@style/DrawerText"
+                android:text="@string/drawer_archived" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="?android:attr/divider" />
+
+        <LinearLayout
+            android:id="@+id/backup"
+            style="@style/DrawerRow">
+
+            <ImageView
+                style="@style/DrawerIcon"
+                android:src="@drawable/ic_import_export_black_24dp"
+                android:tint="?android:attr/textColorSecondary" />
+
+            <TextView
+                style="@style/DrawerText"
+                android:text="@string/backup_title" />
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/scheduled"
+            style="@style/DrawerRow">
+
+            <ImageView
+                style="@style/DrawerIcon"
+                android:src="@drawable/ic_event_black_24dp"
+                android:tint="?android:attr/textColorSecondary" />
+
+            <TextView
+                style="@style/DrawerText"
+                android:text="@string/drawer_scheduled" />
+
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/blocking"
+            style="@style/DrawerRow">
+
+            <ImageView
+                style="@style/DrawerIcon"
+                android:src="@drawable/ic_block_black_24dp"
+                android:tint="?android:attr/textColorSecondary" />
+
+            <TextView
+                style="@style/DrawerText"
+                android:text="@string/drawer_blocking" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="?android:attr/divider" />
+
+        <LinearLayout
+            android:id="@+id/settings"
+            style="@style/DrawerRow">
+
+            <ImageView
+                style="@style/DrawerIcon"
+                android:src="@drawable/ic_settings_black_24dp"
+                android:tint="?android:attr/textColorSecondary" />
+
+            <TextView
+                style="@style/DrawerText"
+                android:text="@string/drawer_settings" />
+
+        </LinearLayout>
+
+
+
+        <LinearLayout
+            android:id="@+id/help"
+            style="@style/DrawerRow">
+
+            <ImageView
+                style="@style/DrawerIcon"
+                android:src="@drawable/ic_help_black_24dp"
+                android:tint="?android:attr/textColorSecondary" />
+
+            <TextView
+                style="@style/DrawerText"
+                android:text="@string/drawer_help" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/invite"
+            style="@style/DrawerRow">
+
+            <ImageView
+                style="@style/DrawerIcon"
+                android:src="@drawable/ic_people_black_24dp"
+                android:tint="?android:attr/textColorSecondary" />
+
+            <TextView
+                style="@style/DrawerText"
+                android:text="@string/drawer_invite" />
+
+        </LinearLayout>
+
+
+
+    </LinearLayout>
+
+</ScrollView>
