@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.provider.Telephony
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -20,7 +21,12 @@ import com.junaid.smsapp.adapters.ConversationAdapter
 import com.junaid.smsapp.adapters.ItemCLickListener
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.utils.SmsContract
-import com.junaid.smsapp.utils.SmsContract.ALL_SMS_URI
+import com.junaid.smsapp.utils.SmsContract.Companion.ADDRESS
+import com.junaid.smsapp.utils.SmsContract.Companion.ALL_SMS_URI
+import com.junaid.smsapp.utils.SmsContract.Companion.CONTACTNAME
+import com.junaid.smsapp.utils.SmsContract.Companion.DATE
+import com.junaid.smsapp.utils.SmsContract.Companion.READ
+import com.junaid.smsapp.utils.SmsContract.Companion.THREADID
 import kotlinx.android.synthetic.main.activity_main.*
 
 
@@ -48,13 +54,15 @@ class MainActivity : AppCompatActivity() {
         checkAndRequestPermissions()
 
         recyclerView.setHasFixedSize(true)
-        recyclerView.layoutManager = LinearLayoutManager(this)
+        val lm = LinearLayoutManager(this)
+        lm.isSmoothScrollbarEnabled = true
+        recyclerView.layoutManager = lm
 
         setInboxTextChangesLis()
     }
 
     /**
-     *
+     *this function will change
      */
     private fun setInboxTextChangesLis() {
 
@@ -115,23 +123,37 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildSmsRecyclerView(allSms: List<Conversation>) {
 
+
         val s = LinkedHashSet<Conversation>(allSms)
         val data = ArrayList<Conversation>(s)
-        var adapter = ConversationAdapter(this, ArrayList(data))
+        val adapter = ConversationAdapter(this, ArrayList(data))
         recyclerView.adapter = adapter
-        adapter.setItemClickListener(ItemCLickListener { color, contact, id, read ->
 
-            startActivity(Intent(this,ComposeActivity::class.java ))
-//            val intent = Intent(this,ComposeActivity::class.java )
+        adapter.setItemClickListener(object : ItemCLickListener {
+            override fun itemClicked(
+                color: Int,
+                contact: String,
+                contactName: String?,
+                id: String,
+                threadId: String
+            ) {
+                val intent = Intent(this@MainActivity, ComposeActivity::class.java)
+                intent.putExtra(ADDRESS, contact)
+                intent.putExtra(CONTACTNAME, contactName)
+                intent.putExtra(THREADID, threadId)
+                startActivity(intent)
 
+            }
         })
     }
 
 
     private fun getAllSms(filter: String? = null): List<Conversation> {
+
         val lstSms = ArrayList<Conversation>()
         var selectionArgs: Array<String>? = null
         var selection: String? = null
+
         if (!filter.isNullOrEmpty()) {
             selection = SmsContract.SMS_SELECTION_SEARCH
             selectionArgs = arrayOf("%$filter%", "%$filter%")
@@ -139,7 +161,6 @@ class MainActivity : AppCompatActivity() {
 
         val cr = this.contentResolver
         val c = cr.query(ALL_SMS_URI, null, selection, selectionArgs, SmsContract.SORT_DESC)
-        this.startManagingCursor(c)
         val totalSMS = c!!.count
 
         if (c.moveToFirst()) {
@@ -147,13 +168,12 @@ class MainActivity : AppCompatActivity() {
                 val objSms = Conversation()
                 objSms.id = c.getString(c.getColumnIndexOrThrow("_id"))
                 //number of conversation
-                objSms.address = c.getString(c.getColumnIndexOrThrow("address"))
-//                objSms.contactName = getContactName(objSms.address!!,this)
-
-                objSms.msg = c.getString(c.getColumnIndexOrThrow("body"))
+                objSms.address = c.getString(c.getColumnIndexOrThrow(ADDRESS))
+                objSms.msg = c.getString(c.getColumnIndexOrThrow(SmsContract.BODY))
+                objSms.threadId = c.getString(c.getColumnIndexOrThrow(SmsContract.THREADID))
                 //1 if msg is read
-                objSms.readState = c.getString(c.getColumnIndex("read"))
-                objSms.time = c.getString(c.getColumnIndexOrThrow("date"))
+                objSms.readState = c.getString(c.getColumnIndex(READ))
+                objSms.time = c.getString(c.getColumnIndexOrThrow(DATE))
 
                 if (c.getString(c.getColumnIndexOrThrow("type")).contains("1")) {
                     objSms.folderName = "inbox"
@@ -168,7 +188,14 @@ class MainActivity : AppCompatActivity() {
         // else {
         // throw new RuntimeException("You have no SMS");
         // }
+
         c.close()
+
+        for (i in lstSms.indices) {
+            if (lstSms[i].address!!.contains("+92")) {
+                lstSms[i].address = lstSms[i].address!!.replace("+92", "0")
+            }
+        }
 
         return lstSms
     }

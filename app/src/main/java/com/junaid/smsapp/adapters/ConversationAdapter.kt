@@ -95,9 +95,10 @@ import com.junaid.smsapp.utils.ColorGeneratorModified
 
                     itemClickListener.itemClicked(
                         data[adapterPosition].color,
-                        data[adapterPosition].contactName ?: data[adapterPosition].address,
-                        data[adapterPosition].id,
-                        data[adapterPosition].readState
+                        data[adapterPosition].address!!,
+                        data[adapterPosition].contactName,
+                        data[adapterPosition].id!!,
+                        data[adapterPosition].threadId!!
                     )
                 }
             }
