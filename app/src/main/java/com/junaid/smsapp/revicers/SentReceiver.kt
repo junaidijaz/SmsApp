@@ -7,9 +7,6 @@ import android.content.Intent
 import android.telephony.SmsManager
 import android.widget.Toast
 
-/**
- * Created by R Ankit on 30-12-2016.
- */
 
 class SentReceiver : BroadcastReceiver() {
 

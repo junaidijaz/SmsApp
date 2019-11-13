@@ -5,12 +5,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import com.junaid.smsapp.R
 
 
-/**
- * Created by R Ankit on 30-12-2016.
- */
+
+
 
 class DeliverReceiver : BroadcastReceiver() {
 

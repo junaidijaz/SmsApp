@@ -3,48 +3,75 @@ package com.junaid.smsapp.revicers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.telephony.SmsMessage
+import android.provider.Telephony
 import android.util.Log
-import android.widget.Toast
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import com.junaid.smsapp.App.Companion.CHANNEL_1_ID
+import com.junaid.smsapp.R
+import com.junaid.smsapp.ui.ComposeActivity.Companion.isActive
+import com.junaid.smsapp.utils.SmsContract
 
 
 class SmsReceiver : BroadcastReceiver() {
+
+
     override fun onReceive(p0: Context?, intent: Intent?) {
         // Get Bundle object contained in the SMS intent passed in
         val bundle = intent?.extras
 
-        if (bundle != null) {
+        if (bundle != null && intent.action.equals("android.provider.Telephony.SMS_RECEIVED")) {
             val pdusObj = bundle.get("pdus") as Array<Any>?
 
             for (i in pdusObj!!.indices) {
-
-                val currentMessage = SmsMessage.createFromPdu(pdusObj[i] as ByteArray)
-                saveSmsInInbox(p0, currentMessage)
-                val phoneNumber = currentMessage.displayOriginatingAddress
-
-                val message = currentMessage.displayMessageBody
-
-                Log.i("SmsReceiver", "senderNum: $phoneNumber; message: $message")
-
-
-                // Show alert
-                val duration = Toast.LENGTH_LONG
-                val toast =
-                    Toast.makeText(p0, "senderNum: $phoneNumber, message: $message", duration)
-                toast.show()
+                val smsMessages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
+                var message = ""
+                for (sms in smsMessages) {
+                    message += sms.displayMessageBody
+                }
+                val phoneNumber = smsMessages[0].displayOriginatingAddress
+                sendOnChannel1(phoneNumber, message, p0!!)
+                Log.d("SmsReceiver", "senderNum: $phoneNumber; message: $message")
 
             } // end for loop
 
         }
     }
 
-    private fun saveSmsInInbox(context: Context?, sms: SmsMessage) {
-        val serviceIntent = Intent(context, SmsReceiver::class.java)
-        serviceIntent.putExtra("sender_no", sms.displayOriginatingAddress)
-        serviceIntent.putExtra("message", sms.displayMessageBody)
-        serviceIntent.putExtra("date", sms.timestampMillis)
-        context?.startService(serviceIntent)
+    companion object {
 
+        private var onSmsReceived: OnSmsReceived? = null
+
+        fun setOnSmsLisenter(onSmsReceived: OnSmsReceived?) {
+            this.onSmsReceived = onSmsReceived
+        }
+
+        fun removeSmsLisenter() {
+            this.onSmsReceived = null
+        }
     }
+
+    private fun sendOnChannel1(phoneNo: String, sms: String, context: Context) {
+
+        val notificationManager = NotificationManagerCompat.from(context)
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_1_ID)
+            .setSmallIcon(R.drawable.ic_action_message)
+            .setContentTitle("New Sms from $phoneNo")
+            .setContentText(sms)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .build()
+
+
+
+
+        if (!isActive) {
+            notificationManager.notify(1, notification)
+            SmsContract.putSmsToInboxDatabase(sms, phoneNo, context)
+            onSmsReceived?.onSmsReceived()
+        }
+    }
+
 
 }

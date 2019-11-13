@@ -2,6 +2,7 @@ package com.junaid.smsapp.ui
 
 import android.Manifest
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,7 +10,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.provider.Telephony
-import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -20,6 +20,8 @@ import com.junaid.smsapp.R
 import com.junaid.smsapp.adapters.ConversationAdapter
 import com.junaid.smsapp.adapters.ItemCLickListener
 import com.junaid.smsapp.model.Conversation
+import com.junaid.smsapp.revicers.OnSmsReceived
+import com.junaid.smsapp.revicers.SmsReceiver
 import com.junaid.smsapp.utils.SmsContract
 import com.junaid.smsapp.utils.SmsContract.Companion.ADDRESS
 import com.junaid.smsapp.utils.SmsContract.Companion.ALL_SMS_URI
@@ -30,7 +32,7 @@ import com.junaid.smsapp.utils.SmsContract.Companion.THREADID
 import kotlinx.android.synthetic.main.activity_main.*
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), OnSmsReceived {
 
 
     private val appPermissions = arrayOf(
@@ -38,7 +40,9 @@ class MainActivity : AppCompatActivity() {
         Manifest.permission.SEND_SMS,
         Manifest.permission.READ_CONTACTS
     )
-
+    var isDefault: Boolean = false //is this app is default
+    private lateinit var smsReceiver: BroadcastReceiver
+    var convoList = ArrayList<Conversation>()
 
     private val PERMISSION_REQUEST_CODE = 1240
 
@@ -59,7 +63,9 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = lm
 
         setInboxTextChangesLis()
+
     }
+
 
     /**
      *this function will change
@@ -67,11 +73,28 @@ class MainActivity : AppCompatActivity() {
     private fun setInboxTextChangesLis() {
 
         toolbarSearch.addTextChangedListener {
-            buildSmsRecyclerView(getAllSms(it.toString()))
+            convoList = ArrayList(getAllSms(it.toString()))
+
         }
 
     }
 
+    override fun onResume() {
+        if (isDefault) {
+            buildSmsRecyclerView(getAllSms())
+        }
+
+        SmsReceiver.setOnSmsLisenter(this)
+
+        super.onResume()
+    }
+
+
+    override fun onPause() {
+        super.onPause()
+
+        SmsReceiver.removeSmsLisenter()
+    }
 
     /**
      * fun will check permissions to be asked
@@ -100,7 +123,9 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT)
             intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, myPackageName)
             startActivityForResult(intent, 1)
+            isDefault = false
         } else {
+            isDefault = true
             buildSmsRecyclerView(getAllSms())
         }
 
@@ -109,11 +134,20 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onSmsReceived() {
+        refreshConversationList()
+    }
+
+    private fun refreshConversationList() {
+        buildSmsRecyclerView(getAllSms())
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == 1) {
             if (resultCode == Activity.RESULT_OK) {
                 val myPackageName = packageName
                 if (Telephony.Sms.getDefaultSmsPackage(this) == myPackageName) {
+                    isDefault = true
                     buildSmsRecyclerView(getAllSms())
                 }
             }
@@ -170,7 +204,7 @@ class MainActivity : AppCompatActivity() {
                 //number of conversation
                 objSms.address = c.getString(c.getColumnIndexOrThrow(ADDRESS))
                 objSms.msg = c.getString(c.getColumnIndexOrThrow(SmsContract.BODY))
-                objSms.threadId = c.getString(c.getColumnIndexOrThrow(SmsContract.THREADID))
+                objSms.threadId = c.getString(c.getColumnIndexOrThrow(THREADID))
                 //1 if msg is read
                 objSms.readState = c.getString(c.getColumnIndex(READ))
                 objSms.time = c.getString(c.getColumnIndexOrThrow(DATE))

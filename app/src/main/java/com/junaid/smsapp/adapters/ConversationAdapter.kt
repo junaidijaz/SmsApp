@@ -18,6 +18,8 @@ import com.amulyakhare.textdrawable.TextDrawable
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.R
 import com.junaid.smsapp.utils.ColorGeneratorModified
+
+
  class ConversationAdapter(
     private var context: Context,
     var data: ArrayList<Conversation>

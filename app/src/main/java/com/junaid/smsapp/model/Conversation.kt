@@ -1,7 +1,7 @@
 package com.junaid.smsapp.model
 
 import android.telephony.PhoneNumberUtils
-import android.util.Log
+
 
 data class Conversation(
     var id: String? = null,
