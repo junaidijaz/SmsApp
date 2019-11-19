@@ -4,8 +4,6 @@ package com.junaid.smsapp.adapters
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Typeface
-import android.net.Uri
-import android.provider.ContactsContract
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,21 +13,28 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
-import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.R
+import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.utils.ColorGeneratorModified
+import com.junaid.smsapp.utils.SmsContract
 
 
- class ConversationAdapter(
-    private var context: Context,
+class ConversationAdapter(
+    var context: Context,
     var data: ArrayList<Conversation>
 ) :
     RecyclerView.Adapter<ConversationAdapter.ExampleViewHolder>() {
     private val generator = ColorGeneratorModified.MATERIAL
     private var itemClickListener: ItemCLickListener? = null
+    private var itemSwipeLisetner: OnSwipeLisetener? = null
+
 
     fun setItemClickListener(itemClickListener: ItemCLickListener) {
         this.itemClickListener = itemClickListener
+    }
+
+    fun setItemSwipeListener(itemClickListener: OnSwipeLisetener) {
+        this.itemSwipeLisetner = itemClickListener
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ExampleViewHolder {
@@ -38,35 +43,48 @@ import com.junaid.smsapp.utils.ColorGeneratorModified
         return ExampleViewHolder(v, itemClickListener)
     }
 
+    fun deleteItem(position: Int) {
+        itemSwipeLisetner?.onSwipeLeft(position)
+    }
+
+    fun archiveItem(position: Int) {
+        itemSwipeLisetner?.onSwipeRight(position)
+    }
+
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ExampleViewHolder, position: Int) {
-        val currentItem = data[position]
+        val currentItem = data[position] as Conversation?
 
 
-        currentItem.contactName = getContactName(currentItem.address!!, context)
+        currentItem?.apply {
+
+            contactName = SmsContract.getContactName(address, context)
 
 
-        holder.title.text = currentItem.contactName ?: currentItem.address
-        holder.snippet.text = currentItem.msg
-        val color = generator.getColor(currentItem.address)
-        val firstChar = currentItem.address?.first()
-        val drawable = TextDrawable.builder().buildRound(firstChar.toString(), color)
-        holder.avatars.setImageDrawable(drawable)
+            holder.title.text = contactName ?: address
+            holder.snippet.text = msg
+            val color = generator.getColor(currentItem.address)
+            val firstChar =address?.first()
+            val drawable = TextDrawable.builder().buildRound(firstChar.toString(), color)
+            holder.avatars.setImageDrawable(drawable)
 
-        if (currentItem.readState.equals("0")) {
-            holder.title.setTypeface(holder.title.typeface, Typeface.BOLD)
-            holder.snippet.setTypeface(holder.snippet.typeface, Typeface.BOLD)
-            holder.snippet.setTextColor(ContextCompat.getColor(context, R.color.black))
-            holder.unread.visibility = View.VISIBLE
+            if (readState.equals("0")) {
+                holder.title.setTypeface(holder.title.typeface, Typeface.BOLD)
+                holder.snippet.setTypeface(holder.snippet.typeface, Typeface.BOLD)
+                holder.snippet.setTextColor(ContextCompat.getColor(context, R.color.black))
+                holder.unread.visibility = View.VISIBLE
 //            holder.time.setTypeface(holder.time.getTypeface(), Typeface.BOLD)
 //            holder.time.setTextColor(ContextCompat.getColor(context, R.color.black))
-        } else {
-            holder.title.setTypeface(null, Typeface.NORMAL)
-            holder.snippet.setTypeface(null, Typeface.NORMAL)
-            holder.unread.visibility = View.GONE
+            } else {
+                holder.title.setTypeface(null, Typeface.NORMAL)
+                holder.snippet.setTypeface(null, Typeface.NORMAL)
+                holder.unread.visibility = View.GONE
 //            holder.time.setTypeface(null, Typeface.NORMAL)
 
+            }
+
         }
+
 
 
     }
@@ -76,10 +94,9 @@ import com.junaid.smsapp.utils.ColorGeneratorModified
     }
 
 
-   inner class ExampleViewHolder(
+    inner class ExampleViewHolder(
         itemView: View,
         itemClickListener: ItemCLickListener?
-
     ) :
         RecyclerView.ViewHolder(itemView) {
 
@@ -90,6 +107,25 @@ import com.junaid.smsapp.utils.ColorGeneratorModified
         private val btnConversation: ConstraintLayout = itemView.findViewById(R.id.btnConversation)
 
         init {
+
+            btnConversation.setOnLongClickListener {
+                if (itemClickListener != null) {
+                    data[adapterPosition].readState = "1"
+
+
+                    itemClickListener.longItemClicked(
+
+                        data[adapterPosition].color,
+                        data[adapterPosition].address!!,
+                        data[adapterPosition].contactName,
+                        data[adapterPosition].id,
+                        data[adapterPosition].threadId,
+                        adapterPosition
+                    )
+                }
+                true
+            }
+
             btnConversation.setOnClickListener {
                 if (itemClickListener != null) {
                     data[adapterPosition].readState = "1"
@@ -104,29 +140,10 @@ import com.junaid.smsapp.utils.ColorGeneratorModified
                     )
                 }
             }
+
         }
 
     }
 
-    private fun getContactName(phoneNumber: String, context: Context): String? {
-        val uri = Uri.withAppendedPath(
-            ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-            Uri.encode(phoneNumber)
-        )
-
-        val projection = arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME)
-
-        var contactName = null as String?
-        val cursor = context.contentResolver.query(uri, projection, null, null, null)
-
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                contactName = cursor.getString(0)
-            }
-            cursor.close()
-        }
-
-        return contactName
-    }
 
 }

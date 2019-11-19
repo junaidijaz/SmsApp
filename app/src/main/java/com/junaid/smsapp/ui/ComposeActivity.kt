@@ -5,20 +5,20 @@ import android.content.*
 import android.net.Uri
 import android.os.Bundle
 import android.telephony.SmsManager
-import android.telephony.SmsMessage
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.junaid.smsapp.App
+import com.junaid.smsapp.NotificationHelper
 import com.junaid.smsapp.R
 import com.junaid.smsapp.adapters.ComposeChatAdapter
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.observers.SmsObserver
-import com.junaid.smsapp.revicers.DeliverReceiver
+import com.junaid.smsapp.revicers.OnSmsReceived
+import com.junaid.smsapp.revicers.SmsReceiver
 import com.junaid.smsapp.utils.SmsContract
 import com.junaid.smsapp.utils.SmsContract.Companion.ADDRESS
 import com.junaid.smsapp.utils.SmsContract.Companion.BODY
 import com.junaid.smsapp.utils.SmsContract.Companion.CONTACTNAME
 import com.junaid.smsapp.utils.SmsContract.Companion.DATE
-import com.junaid.smsapp.utils.SmsContract.Companion.INBOX_SMS_URI
 import com.junaid.smsapp.utils.SmsContract.Companion.MESSAGE_IS_NOT_READ
 import com.junaid.smsapp.utils.SmsContract.Companion.MESSAGE_IS_NOT_SEEN
 import com.junaid.smsapp.utils.SmsContract.Companion.MESSAGE_TYPE_INBOX
@@ -31,33 +31,33 @@ import com.junaid.smsapp.utils.SmsContract.Companion.TYPE
 import kotlinx.android.synthetic.main.compose_activity.*
 
 
-class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener {
+class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener, OnSmsReceived {
+
+    override fun onSmsReceived() {
+        refreshConversation()
+    }
 
 
     var contactName: String? = null
     var threadId: String? = null
     var smsList = ArrayList<Conversation>()
+    var fromNotification = false
 
-    companion object{
-       var isActive = false
+    companion object {
+        var isActive = false
     }
-
-    private lateinit var smsSentReceiver: BroadcastReceiver
-    private lateinit var smsReceiver: BroadcastReceiver
-    private var deliveryBroadcastReceiver = DeliverReceiver()
 
 
     lateinit var conversationAdapter: ComposeChatAdapter
-
     private var address = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.compose_activity)
 
-        address = intent.getStringExtra(ADDRESS)!!
-        contactName = intent.getStringExtra(CONTACTNAME)
-        threadId = intent.getStringExtra(THREADID)
+
+        getContactInfo()
+
 
         toolbar.title = contactName ?: address
         toolbar.subtitle = if (contactName != null) address else ""
@@ -71,40 +71,32 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener {
             val sms = message.text.toString().trim()
             if (sms.isNotEmpty()) {
                 message.text.clear()
-                sendMySMS(sms)
+                SmsContract.sendMySMS(sms,address,this)
+                refreshConversation()
             }
         }
-
-//        registerReceiver(smsSentReceiver, IntentFilter("SENT"))
-//        registerReceiver(deliveryBroadcastReceiver, IntentFilter("SMS_DELIVERED"))
-
-
-        smsReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                val bundle = intent.extras
-                getSmsFromReceiver(bundle)
-            }
-        }
-
-        registerReceiver(smsReceiver, IntentFilter("android.provider.Telephony.SMS_RECEIVED"))
 
 
     }
 
-    fun getSmsFromReceiver(bundle: Bundle?) {
-        val pdusObj = bundle?.get("pdus") as Array<Any>?
+    private fun getContactInfo() {
 
-        for (i in pdusObj!!.indices) {
-
-            val currentMessage = SmsMessage.createFromPdu(pdusObj[i] as ByteArray)
-            val phoneNumber = currentMessage.displayOriginatingAddress
-            val message = currentMessage.displayMessageBody
-            putSmsToDatabase(message, INBOX_SMS_URI, phoneNumber)
-
-
-        } // end for loop
+        if (intent.getStringExtra("notificationAddress") != null) {
+            fromNotification = true
+            address = intent.getStringExtra("notificationAddress") ?: ""
+            threadId = SmsContract.getThreadId(address,this)
+            NotificationHelper.removeNotification(this,threadId)
+            Log.d("TAG", "getContactInfo: $threadId")
+            contactName = SmsContract.getContactName(address, this)
+            return
+        }
+        address = intent.getStringExtra(ADDRESS)!!
+        contactName = intent.getStringExtra(CONTACTNAME)
+        threadId = intent.getStringExtra(THREADID)
+        Log.d("TAG", "getContactInfo: $threadId")
 
     }
+
 
     override fun onSmsSent(threadId: String, smsId: String) {
 
@@ -123,22 +115,6 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener {
         messageList.adapter = conversationAdapter
     }
 
-    private fun sendMySMS(message: String) {
-        val sms = SmsManager.getDefault()
-        // if message length is too long messages are divided
-        val messages = sms.divideMessage(message)
-        for (msg in messages) {
-
-            val sentIntent = PendingIntent.getBroadcast(this, 0, Intent("SMS_SENT"), 0)
-            val deliveredIntent =
-                PendingIntent.getBroadcast(this, 0, Intent("SMS_DELIVERED"), 0)
-            sms.sendTextMessage(address, null, msg, sentIntent, deliveredIntent)
-        }
-
-        putSmsToDatabase(message, SENT_SMS_URI, null)
-
-
-    }
 
     private fun putSmsToDatabase(sms: String, uri: Uri, _address: String?) {
         // Create SMS row
@@ -158,19 +134,19 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener {
         // Push row into the SMS table
         contentResolver.insert(uri, values)
 
-        refreshConversation()
 
     }
 
     override fun onResume() {
         super.onResume()
-      isActive = true
+        refreshConversation()
+        SmsReceiver.setOnSmsLisenter(this)
+        isActive = true
     }
 
     private fun getSmsForContact(threadId: String?): List<Conversation> {
 
         val lstSms = ArrayList<Conversation>()
-
         val cr = this.contentResolver
         val c = cr.query(
             SmsContract.ALL_SMS_URI,
@@ -181,7 +157,6 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener {
         )
 
         val totalSMS = c!!.count
-
         if (c.moveToFirst()) {
             for (i in 0 until totalSMS) {
                 val objSms = Conversation()
@@ -214,11 +189,8 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener {
     }
 
     override fun onPause() {
-
-//        unregisterReceiver(smsSentReceiver)
-//        unregisterReceiver(deliveryBroadcastReceiver)
-        unregisterReceiver(smsReceiver)
-        isActive  = false
+        SmsReceiver.setOnSmsLisenter(null)
+        isActive = false
         super.onPause()
     }
 

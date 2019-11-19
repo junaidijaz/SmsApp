@@ -1,8 +1,12 @@
 package com.junaid.smsapp.utils
 
+import android.app.PendingIntent
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.provider.ContactsContract
+import android.telephony.SmsManager
 
 /**
  * Created by R Ankit on 25-12-2016.
@@ -60,6 +64,81 @@ class SmsContract {
             // Push row into the SMS table
             contentResolver.insert(INBOX_SMS_URI, values)
         }
+
+       private fun putSmsToSentDatabase(sms: String, _address: String?, context: Context) {
+            // Create SMS row
+            val contentResolver = context.contentResolver
+            val values = ContentValues()
+            values.put(ADDRESS, _address)
+            values.put(DATE, System.currentTimeMillis())
+            values.put(READ, MESSAGE_IS_READ)
+            values.put(TYPE, MESSAGE_TYPE_SENT)
+            values.put(SEEN, MESSAGE_IS_SEEN)
+            values.put(BODY, sms)
+            // Push row into the SMS table
+            contentResolver.insert(INBOX_SMS_URI, values)
+        }
+
+         fun getContactName(phoneNumber: String?, context: Context): String? {
+            val uri = Uri.withAppendedPath(
+                ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                Uri.encode(phoneNumber)
+            )
+
+            val projection = arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME)
+
+            var contactName = null as String?
+            val cursor = context.contentResolver.query(uri, projection, null, null, null)
+
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    contactName = cursor.getString(0)
+                }
+                cursor.close()
+            }
+
+            return contactName
+        }
+
+
+         fun sendMySMS(message: String,phoneNumber: String,context: Context) {
+            val sms = SmsManager.getDefault()
+            // if message length is too long messages are divided
+            val messages = sms.divideMessage(message)
+            for (msg in messages) {
+
+                val sentIntent = PendingIntent.getBroadcast(context, 0, Intent("SMS_SENT"), 0)
+                val deliveredIntent =
+                    PendingIntent.getBroadcast(context, 0, Intent("SMS_DELIVERED"), 0)
+                sms.sendTextMessage(phoneNumber, null, msg, sentIntent, deliveredIntent)
+            }
+            putSmsToSentDatabase(message, phoneNumber, context)
+        }
+
+
+         fun getThreadId(number: String,context: Context): String? {
+
+            val contentResolver = context.contentResolver
+            val uri = Uri.parse("content://sms/")
+
+            val cursor = contentResolver.query(
+                uri,
+                null,
+                "thread_id IS NOT NULL) GROUP BY (thread_id AND address=?",
+                arrayOf(number),
+                "date DESC"
+            )
+
+            var threadId = ""
+
+
+            while (cursor!!.moveToNext()) {
+                threadId = cursor.getString(cursor.getColumnIndex("thread_id"))
+            }
+            cursor.close()
+            return threadId
+        }
+
 
 
     }

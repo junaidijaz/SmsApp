@@ -2,7 +2,7 @@ package com.junaid.smsapp.ui
 
 import android.Manifest
 import android.app.Activity
-import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,18 +10,28 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.provider.Telephony
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
+import com.junaid.smsapp.NotificationHelper
 import com.junaid.smsapp.R
 import com.junaid.smsapp.adapters.ConversationAdapter
 import com.junaid.smsapp.adapters.ItemCLickListener
+import com.junaid.smsapp.adapters.OnSwipeLisetener
+import com.junaid.smsapp.adapters.SwipeToDeleteCallback
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.revicers.OnSmsReceived
 import com.junaid.smsapp.revicers.SmsReceiver
+import com.junaid.smsapp.ui.viewmodel.ConversationViewModel
 import com.junaid.smsapp.utils.SmsContract
 import com.junaid.smsapp.utils.SmsContract.Companion.ADDRESS
 import com.junaid.smsapp.utils.SmsContract.Companion.ALL_SMS_URI
@@ -34,6 +44,10 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), OnSmsReceived {
 
+    private lateinit var mRecentlyDeletedItem: Conversation
+    private var mRecentlyDeletedItemPosition = -1
+
+    private lateinit var conversationViewModel: ConversationViewModel
 
     private val appPermissions = arrayOf(
         Manifest.permission.READ_SMS,
@@ -41,8 +55,9 @@ class MainActivity : AppCompatActivity(), OnSmsReceived {
         Manifest.permission.READ_CONTACTS
     )
     var isDefault: Boolean = false //is this app is default
-    private lateinit var smsReceiver: BroadcastReceiver
     var convoList = ArrayList<Conversation>()
+    lateinit var adapter: ConversationAdapter
+
 
     private val PERMISSION_REQUEST_CODE = 1240
 
@@ -50,19 +65,27 @@ class MainActivity : AppCompatActivity(), OnSmsReceived {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        Log.d("TAG", "onCreate: ")
+
+        conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
+        conversationViewModel.allConversation.observe(this, Observer {
+            it?.let {
+                Log.d("TAG", "inViewModel: ")
+                convoList.clear()
+                convoList.addAll(it)
+                if (::adapter.isInitialized)
+                    adapter.notifyDataSetChanged()
+            }
+        })
+
         /**check for app permissions
          * in case one or more permissions are not granted
          * activityCompact.requestPermissions will request permissions
          * and the control goes to onRequestPermissionsResult() callback method
          **/
         checkAndRequestPermissions()
-
-        recyclerView.setHasFixedSize(true)
-        val lm = LinearLayoutManager(this)
-        lm.isSmoothScrollbarEnabled = true
-        recyclerView.layoutManager = lm
-
         setInboxTextChangesLis()
+
 
     }
 
@@ -71,30 +94,32 @@ class MainActivity : AppCompatActivity(), OnSmsReceived {
      *this function will change
      */
     private fun setInboxTextChangesLis() {
-
         toolbarSearch.addTextChangedListener {
-            convoList = ArrayList(getAllSms(it.toString()))
-
+            refreshConversationList(it.toString())
         }
-
     }
 
     override fun onResume() {
+
+        Log.d("TAG", "onResume: ")
+        if (!::conversationViewModel.isInitialized)
+            conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
+
         if (isDefault) {
-            buildSmsRecyclerView(getAllSms())
+            buildSmsRecyclerView()
+            refreshConversationList(null)
         }
-
+        NotificationHelper.removeNotification(this, null)
         SmsReceiver.setOnSmsLisenter(this)
-
         super.onResume()
     }
 
 
     override fun onPause() {
         super.onPause()
-
         SmsReceiver.removeSmsLisenter()
     }
+
 
     /**
      * fun will check permissions to be asked
@@ -126,7 +151,8 @@ class MainActivity : AppCompatActivity(), OnSmsReceived {
             isDefault = false
         } else {
             isDefault = true
-            buildSmsRecyclerView(getAllSms())
+            buildSmsRecyclerView()
+            refreshConversationList(null)
         }
 
 
@@ -135,11 +161,11 @@ class MainActivity : AppCompatActivity(), OnSmsReceived {
     }
 
     override fun onSmsReceived() {
-        refreshConversationList()
+        refreshConversationList(null)
     }
 
-    private fun refreshConversationList() {
-        buildSmsRecyclerView(getAllSms())
+    private fun refreshConversationList(query: String?) {
+        conversationViewModel.insertAllConversation(getAllSms(query))
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -148,20 +174,63 @@ class MainActivity : AppCompatActivity(), OnSmsReceived {
                 val myPackageName = packageName
                 if (Telephony.Sms.getDefaultSmsPackage(this) == myPackageName) {
                     isDefault = true
-                    buildSmsRecyclerView(getAllSms())
+                    buildSmsRecyclerView()
+                    refreshConversationList(null)
                 }
             }
         }
         super.onActivityResult(requestCode, resultCode, data)
     }
 
-    private fun buildSmsRecyclerView(allSms: List<Conversation>) {
+    fun deleteItem(position: Int) {
+        mRecentlyDeletedItem = convoList[position]
+        mRecentlyDeletedItemPosition = position
+        convoList.removeAt(position)
+        adapter.notifyItemRemoved(position)
+        Log.d("TAG", "deleteItem: ${convoList.size}")
+        showUndoSnackbar()
+    }
 
+    private fun showUndoSnackbar() {
+        val view = findViewById<DrawerLayout>(R.id.drawerLayout)
+        val snackbar = Snackbar.make(
+            view, "Conversation archived...",
+            Snackbar.LENGTH_LONG
+        )
+        snackbar.setAction("Undo") { undoDelete() }
+        snackbar.show()
+    }
 
-        val s = LinkedHashSet<Conversation>(allSms)
-        val data = ArrayList<Conversation>(s)
-        val adapter = ConversationAdapter(this, ArrayList(data))
+    private fun undoDelete() {
+        convoList.add(
+            mRecentlyDeletedItemPosition,
+            mRecentlyDeletedItem
+        )
+        adapter.notifyItemInserted(mRecentlyDeletedItemPosition)
+    }
+
+    private fun buildSmsRecyclerView() {
+
+        recyclerView.setHasFixedSize(true)
+        val lm = LinearLayoutManager(this)
+        lm.isSmoothScrollbarEnabled = true
+        recyclerView.layoutManager = lm
+        adapter = ConversationAdapter(this, convoList)
+        val itemTouchHelper = ItemTouchHelper(SwipeToDeleteCallback(adapter))
+        itemTouchHelper.attachToRecyclerView(recyclerView)
         recyclerView.adapter = adapter
+
+        adapter.setItemSwipeListener(object : OnSwipeLisetener {
+            override fun onSwipeLeft(position: Int) {
+
+                deleteItem(position)
+            }
+
+            override fun onSwipeRight(position: Int) {
+                deleteItem(position)
+
+            }
+        })
 
         adapter.setItemClickListener(object : ItemCLickListener {
             override fun itemClicked(
@@ -178,11 +247,70 @@ class MainActivity : AppCompatActivity(), OnSmsReceived {
                 startActivity(intent)
 
             }
+
+            override fun longItemClicked(
+                color: Int,
+                contact: String,
+                contactName: String?,
+                id: String,
+                threadId: String,
+                position: Int
+            ) {
+
+                showDialog(
+                    "",
+                    "Are you sure you want to delete ${contactName ?: contact} conversation?",
+                    "Yes",
+                    DialogInterface.OnClickListener { dialogInterface, i ->
+                        dialogInterface.dismiss()
+                        conversationViewModel.deleteConversation(threadId, position)
+//                        deleteSMS(this@MainActivity, contact)
+//                        refreshConversationList(null)
+                    },
+                    "No",
+                    DialogInterface.OnClickListener { dialogInterface, i ->
+                        dialogInterface.dismiss()
+                    }, false
+                )
+
+
+            }
         })
     }
 
 
-    private fun getAllSms(filter: String? = null): List<Conversation> {
+    fun deleteSMS(context: Context, number: String) {
+        try {
+
+            val uriSms = Uri.parse("content://sms/inbox")
+            val c = context.contentResolver.query(
+                uriSms,
+                arrayOf("_id", "thread_id", "address", "person", "date", "body"), null, null, null
+            )
+
+            if (c != null && c.moveToFirst()) {
+                do {
+                    val id = c.getLong(0)
+                    val address = c.getString(2)
+                    if (address == number) {
+
+                        context.contentResolver.delete(
+                            Uri.parse("content://sms/$id"), null, null
+                        )
+                    }
+                } while (c.moveToNext())
+            }
+            c?.close()
+        } catch (e: Exception) {
+
+        } finally {
+        }
+
+
+    }
+
+
+    private fun getAllSms(filter: String? = null): ArrayList<Conversation> {
 
         val lstSms = ArrayList<Conversation>()
         var selectionArgs: Array<String>? = null
@@ -215,7 +343,9 @@ class MainActivity : AppCompatActivity(), OnSmsReceived {
                     objSms.folderName = "sent"
                 }
 
-                lstSms.add(objSms)
+                if (objSms.address != null)
+                    lstSms.add(objSms)
+
                 c.moveToNext()
             }
         }
@@ -225,13 +355,17 @@ class MainActivity : AppCompatActivity(), OnSmsReceived {
 
         c.close()
 
+
         for (i in lstSms.indices) {
-            if (lstSms[i].address!!.contains("+92")) {
-                lstSms[i].address = lstSms[i].address!!.replace("+92", "0")
+            if (lstSms[i].address != null) {
+                if (lstSms[i].address!!.contains("+92")) {
+                    lstSms[i].address = lstSms[i].address!!.replace("+92", "0")
+                }
             }
         }
 
-        return lstSms
+        return ArrayList(LinkedHashSet<Conversation>(lstSms))
+
     }
 
 

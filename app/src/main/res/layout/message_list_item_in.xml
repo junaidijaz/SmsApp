@@ -26,6 +26,7 @@
     <TextView
         android:id="@+id/timestamp"
         style="@style/TextSecondary"
+        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -40,6 +41,7 @@
         android:id="@+id/sim"
         android:layout_width="16dp"
         android:layout_height="16dp"
+        android:visibility="invisible"
         android:layout_marginEnd="2dp"
         android:src="@drawable/ic_sim_card_black_24dp"
         android:tint="?android:attr/textColorSecondary"
@@ -50,6 +52,7 @@
 
     <TextView
         android:id="@+id/simIndex"
+        android:visibility="invisible"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="?android:attr/textColorSecondary"
