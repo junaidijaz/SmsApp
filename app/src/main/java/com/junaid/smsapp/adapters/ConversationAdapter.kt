@@ -73,14 +73,10 @@ class ConversationAdapter(
                 holder.snippet.setTypeface(holder.snippet.typeface, Typeface.BOLD)
                 holder.snippet.setTextColor(ContextCompat.getColor(context, R.color.black))
                 holder.unread.visibility = View.VISIBLE
-//            holder.time.setTypeface(holder.time.getTypeface(), Typeface.BOLD)
-//            holder.time.setTextColor(ContextCompat.getColor(context, R.color.black))
             } else {
                 holder.title.setTypeface(null, Typeface.NORMAL)
                 holder.snippet.setTypeface(null, Typeface.NORMAL)
                 holder.unread.visibility = View.GONE
-//            holder.time.setTypeface(null, Typeface.NORMAL)
-
             }
 
         }

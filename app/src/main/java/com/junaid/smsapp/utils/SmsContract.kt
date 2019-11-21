@@ -7,6 +7,8 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
 import android.telephony.SmsManager
+import com.junaid.smsapp.model.Conversation
+import com.junaid.smsapp.model.room.ConversationRoomDatabase
 
 /**
  * Created by R Ankit on 25-12-2016.
@@ -50,9 +52,30 @@ class SmsContract {
         val SORT_ASC = "date ASC"
 
 
-
-          fun putSmsToInboxDatabase(sms: String, _address: String?, context: Context) {
+        fun putSmsToInboxDatabase(
+            sms: String,
+            _address: String?,
+            isSpam: Boolean,
+            context: Context
+        ) {
             // Create SMS row
+            val cDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
+
+            val threadId = cDao.getThreadId(_address!!)
+            val conversation = Conversation(
+                address = _address,
+                msg = sms,
+                folderName = "inbox",
+                isSpam = isSpam,
+                readState = "0",
+                threadId = threadId,
+                time = System.currentTimeMillis().toString()
+            )
+            cDao.insertConversation(conversation)
+
+            if (isSpam)
+                return
+
             val contentResolver = context.contentResolver
             val values = ContentValues()
             values.put(ADDRESS, _address)
@@ -65,7 +88,7 @@ class SmsContract {
             contentResolver.insert(INBOX_SMS_URI, values)
         }
 
-       private fun putSmsToSentDatabase(sms: String, _address: String?, context: Context) {
+        private fun putSmsToSentDatabase(sms: String, _address: String?, context: Context) {
             // Create SMS row
             val contentResolver = context.contentResolver
             val values = ContentValues()
@@ -79,7 +102,7 @@ class SmsContract {
             contentResolver.insert(INBOX_SMS_URI, values)
         }
 
-         fun getContactName(phoneNumber: String?, context: Context): String? {
+        fun getContactName(phoneNumber: String?, context: Context): String? {
             val uri = Uri.withAppendedPath(
                 ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
                 Uri.encode(phoneNumber)
@@ -101,7 +124,7 @@ class SmsContract {
         }
 
 
-         fun sendMySMS(message: String,phoneNumber: String,context: Context) {
+        fun sendMySMS(message: String, phoneNumber: String, context: Context) {
             val sms = SmsManager.getDefault()
             // if message length is too long messages are divided
             val messages = sms.divideMessage(message)
@@ -116,7 +139,7 @@ class SmsContract {
         }
 
 
-         fun getThreadId(number: String,context: Context): String? {
+        fun getThreadId(number: String, context: Context): String? {
 
             val contentResolver = context.contentResolver
             val uri = Uri.parse("content://sms/")
@@ -140,9 +163,7 @@ class SmsContract {
         }
 
 
-
     }
-
 
 
 }

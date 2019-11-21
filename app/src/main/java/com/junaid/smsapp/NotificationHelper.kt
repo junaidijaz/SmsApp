@@ -13,6 +13,7 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import com.junaid.smsapp.App.Companion.CHANNEL_1_ID
 import com.junaid.smsapp.model.Conversation
+import com.junaid.smsapp.model.room.ConversationRoomDatabase
 import com.junaid.smsapp.revicers.DirectReplyReceiver
 import com.junaid.smsapp.ui.ComposeActivity
 import com.junaid.smsapp.utils.SmsContract
@@ -22,10 +23,11 @@ class NotificationHelper {
 
     companion object {
 
-        var notificationMessages: Multimap<Int, Conversation> = ArrayListMultimap.create()
+       private var notificationMessages: Multimap<Int, Conversation> = ArrayListMultimap.create()
         const val KEY_REPLY = "key_reply"
 
         fun sendChannel1Notification(phoneNo: String, sms: String, context: Context) {
+
             val activityIntent = Intent(context, ComposeActivity::class.java)
             activityIntent.putExtra("notificationAddress", phoneNo)
             val contentIntent = PendingIntent.getActivity(
@@ -109,6 +111,10 @@ class NotificationHelper {
 
             }
         }
+
+
+
+
 
     }
 }

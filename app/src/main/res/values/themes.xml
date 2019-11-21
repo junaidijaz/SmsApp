@@ -54,6 +54,11 @@
         <item name="switchTrackEnabled">@color/switchTrackEnabledLight</item>
         <item name="switchTrackDisabled">@color/switchTrackDisabledLight</item>
         <item name="windowActionBar">false</item>
+
+    </style>
+
+    <style name="toolbarTheme" parent="AppBaseTheme">
+        <item name="android:textColorSecondary">@color/white</item>
     </style>
 
     <style name="AppThemeDialog" parent="Theme.AppCompat.Light.Dialog">

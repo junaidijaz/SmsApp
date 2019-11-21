@@ -22,6 +22,7 @@
     <string name="menu_save">Save to gallery</string>
 
     <string name="main_drawer_open_cd">Open navigation drawer</string>
+    <string name="main_drawer_close_cd">Close navigation drawer</string>
     <string name="main_title_selected">%d selected</string>
     <string name="main_menu_clear">Clear</string>
     <string name="main_menu_archive">Archive</string>
@@ -438,6 +439,18 @@
         <item>That\'s okay</item>
     </string-array>
 
+    <string-array name="convo_options">
+        <item>Delete</item>
+        <item>Spam</item>
+        <item>Block</item>
+    </string-array>
+
     <string name="settings">Settings</string>
     <string name="search">Search</string>
+    <string name="archived">Archived</string>
+    <string name="blocking">Blocking</string>
+    <string name="spam">Spam</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

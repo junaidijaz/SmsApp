@@ -46,45 +46,7 @@
 
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:background="?android:attr/divider" />
 
-        <LinearLayout
-            android:id="@+id/backup"
-            style="@style/DrawerRow">
-
-            <ImageView
-                style="@style/DrawerIcon"
-                android:src="@drawable/ic_import_export_black_24dp"
-                android:tint="?android:attr/textColorSecondary" />
-
-            <TextView
-                style="@style/DrawerText"
-                android:text="@string/backup_title" />
-
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/scheduled"
-            style="@style/DrawerRow">
-
-            <ImageView
-                style="@style/DrawerIcon"
-                android:src="@drawable/ic_event_black_24dp"
-                android:tint="?android:attr/textColorSecondary" />
-
-            <TextView
-                style="@style/DrawerText"
-                android:text="@string/drawer_scheduled" />
-
-
-
-        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/blocking"
@@ -122,40 +84,6 @@
                 android:text="@string/drawer_settings" />
 
         </LinearLayout>
-
-
-
-        <LinearLayout
-            android:id="@+id/help"
-            style="@style/DrawerRow">
-
-            <ImageView
-                style="@style/DrawerIcon"
-                android:src="@drawable/ic_help_black_24dp"
-                android:tint="?android:attr/textColorSecondary" />
-
-            <TextView
-                style="@style/DrawerText"
-                android:text="@string/drawer_help" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/invite"
-            style="@style/DrawerRow">
-
-            <ImageView
-                style="@style/DrawerIcon"
-                android:src="@drawable/ic_people_black_24dp"
-                android:tint="?android:attr/textColorSecondary" />
-
-            <TextView
-                style="@style/DrawerText"
-                android:text="@string/drawer_invite" />
-
-        </LinearLayout>
-
-
 
     </LinearLayout>
 

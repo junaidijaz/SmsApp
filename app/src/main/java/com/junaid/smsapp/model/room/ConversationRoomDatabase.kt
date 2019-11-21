@@ -6,11 +6,12 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.junaid.smsapp.model.Conversation
 
+
 // Annotates class to be a Room Database with a table (entity) of the Word class
-@Database(entities = [Conversation::class], version = 1, exportSchema = false)
+@Database(entities = [Conversation::class], version = 2, exportSchema = false)
 abstract class ConversationRoomDatabase : RoomDatabase() {
 
-    abstract fun wordDao(): ConversationDao
+    abstract fun conversationDao(): ConversationDao
 
     companion object {
         // Singleton prevents multiple instances of database opening at the
@@ -28,10 +29,11 @@ abstract class ConversationRoomDatabase : RoomDatabase() {
                     context.applicationContext,
                     ConversationRoomDatabase::class.java,
                     "word_database"
-                ).build()
+                ).allowMainThreadQueries().build()
                 INSTANCE = instance
                 return instance
             }
         }
+
     }
 }

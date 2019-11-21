@@ -8,18 +8,19 @@ import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.model.room.ConversationRoomDatabase
 import com.junaid.smsapp.respository.ConversationRepository
 import kotlinx.coroutines.launch
-import java.text.FieldPosition
 
 class ConversationViewModel(application: Application) : AndroidViewModel(application) {
     private val conversationRepository: ConversationRepository
     val allConversation: LiveData<List<Conversation>>
+    val getBlockedNumbers: LiveData<List<Conversation>>
 
     init {
 
         // the correct WordRepository.
-        val conversationDao = ConversationRoomDatabase.getDatabase(application).wordDao()
+        val conversationDao = ConversationRoomDatabase.getDatabase(application).conversationDao()
         conversationRepository = ConversationRepository(conversationDao)
         allConversation = conversationRepository.allConversations
+        getBlockedNumbers = conversationRepository.getAllBlockedConversations
     }
 
     /**
@@ -37,11 +38,24 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
         conversationRepository.insertConversation(conversation)
     }
 
-    fun deleteConversation(threadId: String, position: Int) = viewModelScope.launch {
-        conversationRepository.deleteConversation(threadId, position)
+    fun deleteConversation(threadId: String) = viewModelScope.launch {
+        conversationRepository.deleteConversation(threadId)
+    }
+
+
+    fun blockAddress(flag: Boolean, phoneNo: String) = viewModelScope.launch {
+        conversationRepository.blockAddress(flag, phoneNo)
+    }
+
+    fun spamAddress(flag: Boolean, phoneNo: String) = viewModelScope.launch {
+        conversationRepository.spamAddress(flag, phoneNo)
     }
 
     fun deleteAllConversation() = viewModelScope.launch {
         conversationRepository.deleteAllConversation()
+    }
+
+    fun getThreadId(phoneNo: String) = viewModelScope.launch {
+        conversationRepository.getThreadId(phoneNo)
     }
 }
