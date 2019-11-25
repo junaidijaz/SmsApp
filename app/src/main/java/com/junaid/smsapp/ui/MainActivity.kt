@@ -1,6 +1,5 @@
 package com.junaid.smsapp.ui
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -9,6 +8,8 @@ import androidx.fragment.app.Fragment
 import com.junaid.smsapp.R
 import com.junaid.smsapp.ui.fragments.BlockingFragment
 import com.junaid.smsapp.ui.fragments.InboxFragment
+import com.junaid.smsapp.ui.fragments.SmartInboxFragment
+import com.junaid.smsapp.ui.fragments.SpamFragment
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.drawer_view.*
 
@@ -16,7 +17,7 @@ import kotlinx.android.synthetic.main.drawer_view.*
 class MainActivity : AppCompatActivity()  {
 
 
-    lateinit var mDrawerToggle: ActionBarDrawerToggle
+  private lateinit var mDrawerToggle: ActionBarDrawerToggle
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,10 +40,16 @@ class MainActivity : AppCompatActivity()  {
             drawerLayout.closeDrawer(GravityCompat.START)
         }
         archived.setOnClickListener {
+            loadFragment(SpamFragment())
             drawerLayout.closeDrawer(GravityCompat.START)
         }
         blocking.setOnClickListener {
             loadFragment(BlockingFragment())
+            drawerLayout.closeDrawer(GravityCompat.START)
+        }
+
+        smartInbox.setOnClickListener {
+            loadFragment(SmartInboxFragment())
             drawerLayout.closeDrawer(GravityCompat.START)
         }
     }
@@ -57,11 +64,6 @@ class MainActivity : AppCompatActivity()  {
             0
         ).apply { syncState() }
 
-    }
-
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
     }
 
 

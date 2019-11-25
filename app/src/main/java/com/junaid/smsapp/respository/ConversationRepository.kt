@@ -2,23 +2,37 @@ package com.junaid.smsapp.respository
 
 import android.content.Context
 import android.net.Uri
+import android.os.AsyncTask
 import androidx.lifecycle.MutableLiveData
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.model.room.ConversationDao
+import com.junaid.smsapp.utils.SmsContract
 
 class ConversationRepository(private val conversationDao: ConversationDao) {
 
 
     var allConversations = conversationDao.getAllConversation(false)
     var getAllBlockedConversations = conversationDao.getAllBlockedConversations(true)
+    var spamConversations = conversationDao.getAllSpamConversations()
     var conversationDeleted = MutableLiveData<Int>()
+    var readSms = conversationDao.getReadSms()
+    var unReadSms = conversationDao.getUnreadSms()
+    var pinnedSms = conversationDao.getPinnedSms()
 
-    suspend fun insertConversationList(convoList: ArrayList<Conversation>) {
+    suspend fun insertConversationList(convoList: ArrayList<Conversation>, context: Context) {
+
         conversationDao.insertAllConversation(convoList)
+        updateNameAsync(conversationDao,context).execute(convoList)
+
     }
+
 
     suspend fun spamAddress(isSpam: Boolean, address: String) {
         conversationDao.setSpamAddress(isSpam, address)
+    }
+
+    fun getSpamConversation() {
+        conversationDao.getAllSpamConversations()
     }
 
     fun insertConversation(conversation: Conversation) {
@@ -38,44 +52,29 @@ class ConversationRepository(private val conversationDao: ConversationDao) {
         conversationDao.blockAddress(flag, phoneNo)
     }
 
+    fun pinSms(flag: Boolean, phoneNo: String) {
+        conversationDao.markSmsPinned(flag, phoneNo)
+    }
+
     fun getThreadId(phoneNo: String) = conversationDao.getThreadId(phoneNo)
 
 
-//    class insertConversationAsyncTask internal constructor(private val dao: ConversationDao) :
-//        AsyncTask<Conversation, Int, Void>() {
-//        override fun doInBackground(vararg conversation: Conversation): Void? {
+    class updateNameAsync internal constructor(private val dao: ConversationDao,var context: Context) :
+        AsyncTask<List<Conversation>, Int, Void>() {
+        override fun doInBackground(vararg conversation: List<Conversation>): Void? {
 //            dao.insertConversation(conversation[0])
-//            return null
-//        }
-//    }
-
-    fun deleteSMS(context: Context, number: String) {
-        try {
-
-            val uriSms = Uri.parse("content://sms/inbox")
-            val c = context.contentResolver.query(
-                uriSms,
-                arrayOf("_id", "thread_id", "address", "person", "date", "body"), null, null, null
-            )
-
-            if (c != null && c.moveToFirst()) {
-                do {
-                    val id = c.getLong(0)
-                    val address = c.getString(2)
-                    if (address == number) {
-
-                        context.contentResolver.delete(
-                            Uri.parse("content://sms/$id"), null, null
-                        )
-                    }
-                } while (c.moveToNext())
+            for(item in conversation[0])
+            {
+                dao.updateName(
+                    SmsContract.getContactName(item.address, context) ?: item.address,
+                    item.address
+                )
             }
-            c?.close()
-        } catch (e: Exception) {
 
-        } finally {
+
+            return null
         }
-
-
     }
+
+
 }

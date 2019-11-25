@@ -136,7 +136,8 @@ class InboxFragment : Fragment(), OnSmsReceived {
 
         //ask for not granted permission
         if (listPermissionNeeded.isNotEmpty()) {
-            requestPermissions(listPermissionNeeded.toTypedArray(),
+            requestPermissions(
+                listPermissionNeeded.toTypedArray(),
                 PERMISSION_REQUEST_CODE
             )
 
@@ -151,9 +152,9 @@ class InboxFragment : Fragment(), OnSmsReceived {
     }
 
     private fun showUndoSnackbar() {
-        val view = mView?.findViewById<DrawerLayout>(R.id.recyclerView)
+        val view = activity?.findViewById<DrawerLayout>(R.id.drawerLayout)
         val snackbar = Snackbar.make(
-            view, "Conversation archived...",
+            view!!, "Conversation archived...",
             Snackbar.LENGTH_LONG
         )
         snackbar.setAction("Undo") { undoDelete() }
@@ -250,6 +251,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
         position: Int,
         threadId: String
     ) {
+
         val builder = AlertDialog.Builder(context!!)
         builder.setTitle(contactName ?: address)
             .setItems(R.array.convo_options,
@@ -308,7 +310,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
                 val objSms = Conversation()
                 objSms.id = c.getString(c.getColumnIndexOrThrow("_id"))
                 //number of conversation
-                objSms.address = c.getString(c.getColumnIndexOrThrow(SmsContract.ADDRESS))
+                objSms.address = c.getString(c.getColumnIndexOrThrow(SmsContract.ADDRESS)) ?: ""
                 objSms.msg = c.getString(c.getColumnIndexOrThrow(SmsContract.BODY))
                 objSms.threadId = c.getString(c.getColumnIndexOrThrow(SmsContract.THREADID))
                 //1 if msg is read
@@ -321,7 +323,9 @@ class InboxFragment : Fragment(), OnSmsReceived {
                     objSms.folderName = "sent"
                 }
 
-                if (objSms.address != null) {
+
+
+                if (objSms.address != "") {
                     lstSms.add(objSms)
                 }
 
@@ -336,8 +340,10 @@ class InboxFragment : Fragment(), OnSmsReceived {
         c.close()
 
 
+
+
         for (i in lstSms.indices) {
-            if (lstSms[i].address != null) {
+            if (lstSms[i].address != "") {
                 if (lstSms[i].address!!.contains("+92")) {
                     lstSms[i].address = lstSms[i].address!!.replace("+92", "0")
                 }
@@ -426,7 +432,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
             }
 
         }
-        
+
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 

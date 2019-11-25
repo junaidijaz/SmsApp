@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull
 @Entity
 data class Conversation(
     @PrimaryKey @NotNull var id: String = "",
-    var address: String? = null,
+    var address: String = "",
     var contactName: String? = null,
     var msg: String? = null,
     @NotNull var threadId: String = "",
@@ -18,7 +18,8 @@ data class Conversation(
     var isBlocked: Boolean = false,
     var isSpam: Boolean = false,
     var folderName: String? = null,
-    var color: Int = 0
+    var color: Int = 0,
+    var isPinned : Boolean = false
 
 ) {
     override fun equals(other: Any?): Boolean {

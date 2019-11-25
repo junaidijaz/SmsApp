@@ -23,6 +23,9 @@ interface ConversationDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertConversation(conversation: Conversation)
 
+    @Query("update conversation set contactName = :name where address = :address")
+    fun updateName(name : String, address: String)
+
     @Query("DELETE FROM Conversation")
     suspend fun deleteAll()
 
@@ -35,19 +38,35 @@ interface ConversationDao {
     @Query("Update conversation set isBlocked = :flag where address = :address")
     suspend fun blockAddress(flag: Boolean, address: String)
 
-    @Query("SELECT * FROM Conversation where isBlocked = :isBlocked and address = :address")
-    fun getBlockConversation(isBlocked: Boolean, address: String) : List<Conversation>
+    @Query("SELECT Count(address) FROM Conversation where isBlocked = :isBlocked and address = :address")
+    fun getBlockedAddressCount(isBlocked: Boolean, address: String): Int
 
-     @Query("SELECT * FROM Conversation where isBlocked = :isBlocked")
-    fun getAllBlockedConversations(isBlocked: Boolean) : LiveData<List<Conversation>>
+    @Query("SELECT * FROM Conversation where isBlocked = :isBlocked")
+    fun getAllBlockedConversations(isBlocked: Boolean): LiveData<List<Conversation>>
 
     @Query("Update conversation set isSpam = :isSpam where address = :address")
     suspend fun setSpamAddress(isSpam: Boolean, address: String)
-    
-    @Query("SELECT * FROM Conversation where isSpam = :isSpam and address = :address")
-    fun getSpamConversations(isSpam: Boolean, address: String): List<Conversation>
+
+    @Query("SELECT * FROM Conversation where isSpam = 1")
+    fun getAllSpamConversations(): LiveData<List<Conversation>>
+
+    @Query("SELECT COUNT(address) FROM Conversation where isSpam = 1 and address = :address")
+    fun getSpamConversationsCount(address: String): Int
 
     @Query("SELECT contactName FROM Conversation where address = :phoneNo")
     fun getContactName(phoneNo: String): String?
+
+
+    @Query("Select * from conversation where readState = 0 order by time DESC")
+    fun getUnreadSms(): LiveData<List<Conversation>>
+
+    @Query("Select * from conversation where readState = 1 order by time DESC")
+    fun getReadSms(): LiveData<List<Conversation>>
+
+    @Query("Select * from conversation where isPinned = 1 order by time DESC")
+    fun getPinnedSms() : LiveData<List<Conversation>>
+
+    @Query("Update conversation set isPinned = :value where address = :address")
+    fun markSmsPinned(value : Boolean , address: String)
 
 }

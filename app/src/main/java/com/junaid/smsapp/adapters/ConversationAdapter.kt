@@ -15,8 +15,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
 import com.junaid.smsapp.R
 import com.junaid.smsapp.model.Conversation
+import com.junaid.smsapp.model.room.ConversationDao
 import com.junaid.smsapp.utils.ColorGeneratorModified
-import com.junaid.smsapp.utils.SmsContract
 
 
 class ConversationAdapter(
@@ -27,6 +27,7 @@ class ConversationAdapter(
     private val generator = ColorGeneratorModified.MATERIAL
     private var itemClickListener: ItemCLickListener? = null
     private var itemSwipeLisetner: OnSwipeLisetener? = null
+   private lateinit var cDao : ConversationDao
 
 
     fun setItemClickListener(itemClickListener: ItemCLickListener) {
@@ -58,13 +59,12 @@ class ConversationAdapter(
 
         currentItem?.apply {
 
-            contactName = SmsContract.getContactName(address, context)
-
+//            contactName = SmsContract.getContactName(address, context)
 
             holder.title.text = contactName ?: address
             holder.snippet.text = msg
             val color = generator.getColor(currentItem.address)
-            val firstChar =address?.first()
+            val firstChar =address.first()
             val drawable = TextDrawable.builder().buildRound(firstChar.toString(), color)
             holder.avatars.setImageDrawable(drawable)
 
@@ -108,11 +108,10 @@ class ConversationAdapter(
                 if (itemClickListener != null) {
                     data[adapterPosition].readState = "1"
 
-
                     itemClickListener.longItemClicked(
 
                         data[adapterPosition].color,
-                        data[adapterPosition].address!!,
+                        data[adapterPosition].address,
                         data[adapterPosition].contactName,
                         data[adapterPosition].id,
                         data[adapterPosition].threadId,

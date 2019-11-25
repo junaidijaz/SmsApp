@@ -13,14 +13,22 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
     private val conversationRepository: ConversationRepository
     val allConversation: LiveData<List<Conversation>>
     val getBlockedNumbers: LiveData<List<Conversation>>
+    val spamConversations: LiveData<List<Conversation>>
+    val pinnedSms : LiveData<List<Conversation>>
+    val readSms : LiveData<List<Conversation>>
+    val unreadSms : LiveData<List<Conversation>>
+    var _application : Application = application
 
     init {
-
         // the correct WordRepository.
         val conversationDao = ConversationRoomDatabase.getDatabase(application).conversationDao()
         conversationRepository = ConversationRepository(conversationDao)
         allConversation = conversationRepository.allConversations
         getBlockedNumbers = conversationRepository.getAllBlockedConversations
+        spamConversations = conversationRepository.spamConversations
+        pinnedSms = conversationRepository.pinnedSms
+        readSms = conversationRepository.readSms
+        unreadSms = conversationRepository.unReadSms
     }
 
     /**
@@ -30,8 +38,9 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
      * ViewModels have a coroutine scope based on their lifecycle called
      * viewModelScope which we can use here.
      */
+
     fun insertAllConversation(conversations: ArrayList<Conversation>) = viewModelScope.launch {
-        conversationRepository.insertConversationList(conversations)
+        conversationRepository.insertConversationList(conversations,_application)
     }
 
     fun insertConversation(conversation: Conversation) = viewModelScope.launch {
@@ -51,7 +60,15 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
         conversationRepository.spamAddress(flag, phoneNo)
     }
 
-    fun deleteAllConversation() = viewModelScope.launch {
+    fun pinSms(flag : Boolean, address : String) = viewModelScope.launch {
+        conversationRepository.pinSms(flag , address)
+    }
+
+    fun getSpamConversations() = viewModelScope.launch {
+        conversationRepository.getSpamConversation()
+    }
+
+    suspend fun deleteAllConversation() = viewModelScope.launch {
         conversationRepository.deleteAllConversation()
     }
 

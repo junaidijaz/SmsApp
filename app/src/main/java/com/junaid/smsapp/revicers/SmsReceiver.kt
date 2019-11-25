@@ -68,13 +68,13 @@ class SmsReceiver : BroadcastReceiver() {
 
         val cDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
 
-        var conversation = cDao.getBlockConversation(true, address = phoneNo)
+        val conversation = cDao.getBlockedAddressCount(true, address = phoneNo)
 
-        if (conversation.isNotEmpty())
+        if (conversation > 0)
             return "blocked"
 
-        conversation = cDao.getSpamConversations(true, address = phoneNo)
-        if (conversation.isNotEmpty())
+        val count = cDao.getSpamConversationsCount(address = phoneNo)
+        if (count > 0)
             return "spam"
 
         return "good"
