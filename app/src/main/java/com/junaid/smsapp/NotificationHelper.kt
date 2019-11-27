@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Build
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
@@ -23,10 +22,17 @@ class NotificationHelper {
 
     companion object {
 
-       private var notificationMessages: Multimap<Int, Conversation> = ArrayListMultimap.create()
+        private var notificationMessages: Multimap<Int, Conversation> = ArrayListMultimap.create()
         const val KEY_REPLY = "key_reply"
 
-        fun sendChannel1Notification(phoneNo: String, sms: String, context: Context) {
+        fun sendChannel1Notification(
+            contactName: String?,
+            phoneNo: String,
+            sms: String,
+            context: Context
+        ) {
+
+            val cDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
 
             val activityIntent = Intent(context, ComposeActivity::class.java)
             activityIntent.putExtra("notificationAddress", phoneNo)
@@ -35,11 +41,11 @@ class NotificationHelper {
                 0, activityIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT
             )
-            val threadId = SmsContract.getThreadId(phoneNo, context)!!.toInt()
-            Log.d("TAG", "onReceive DirectReply: $phoneNo  $threadId")
+            val threadId = cDao.getThreadId(phoneNo).toInt()
+
             notificationMessages.put(
                 threadId,
-                Conversation(address = phoneNo, msg = sms)
+                Conversation(contactName = contactName, address = phoneNo, msg = sms)
             )
 
             val remoteInput = RemoteInput.Builder(KEY_REPLY)
@@ -76,7 +82,7 @@ class NotificationHelper {
                 val notificationMessage = NotificationCompat.MessagingStyle.Message(
                     chatMessage.msg,
                     System.currentTimeMillis(),
-                    chatMessage.address
+                    chatMessage.contactName ?: chatMessage.address
                 )
                 messagingStyle.addMessage(notificationMessage)
             }
@@ -95,7 +101,7 @@ class NotificationHelper {
 
             val notificationManager = NotificationManagerCompat.from(context)
             notificationManager.notify(
-                SmsContract.getThreadId(phoneNo, context)!!.toInt(),
+                cDao.getThreadId(phoneNo).toInt(),
                 notification
             )
         }
@@ -111,9 +117,6 @@ class NotificationHelper {
 
             }
         }
-
-
-
 
 
     }

@@ -3,12 +3,16 @@ package com.junaid.smsapp.revicers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
 import android.provider.Telephony
 import android.util.Log
 import com.junaid.smsapp.NotificationHelper
+import com.junaid.smsapp.model.room.ConversationDao
 import com.junaid.smsapp.model.room.ConversationRoomDatabase
 import com.junaid.smsapp.ui.ComposeActivity.Companion.isActive
 import com.junaid.smsapp.utils.SmsContract
+import java.util.*
+import kotlin.concurrent.schedule
 
 
 class SmsReceiver : BroadcastReceiver() {
@@ -18,55 +22,61 @@ class SmsReceiver : BroadcastReceiver() {
         // Get Bundle object contained in the SMS intent passed in
         val bundle = intent?.extras
 
+        val cDao = ConversationRoomDatabase.getDatabase(p0!!).conversationDao()
+
         if (bundle != null && intent.action.equals("android.provider.Telephony.SMS_RECEIVED")) {
             val pdusObj = bundle.get("pdus") as Array<Any>?
 
             var message = ""
             var phoneNumber = ""
+            var contactName = ""
+
             for (i in pdusObj!!.indices) {
                 val smsMessages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
                 for (sms in smsMessages) {
                     message += sms.displayMessageBody
                 }
+
                 phoneNumber = smsMessages[0].displayOriginatingAddress
 
                 if (phoneNumber.contains("+92")) {
                     phoneNumber = phoneNumber.replace("+92", "0")
                 }
-
-                Log.d("SmsReceiver", "senderNum: $phoneNumber; message: $message")
+                contactName = cDao.getContactName(phoneNumber) ?: ""
             } // end for loop
-
-
-            when (numberIsSpamOrBlock(phoneNumber, p0!!)) {
+            when (numberIsSpamOrBlock(cDao,phoneNumber, p0)) {
                 "blocked" -> {
                     return
                 }
                 "spam" -> {
-                    SmsContract.putSmsToInboxDatabase(message, phoneNumber, true, p0)
+                    SmsContract.putSmsToInboxDatabase(contactName,message, phoneNumber, true, p0)
                     return
                 }
                 else -> {
-
-                    SmsContract.putSmsToInboxDatabase(message, phoneNumber, false, p0)
+                    SmsContract.putSmsToInboxDatabase(contactName,message, phoneNumber, false, p0)
                     if (!isActive)
                         NotificationHelper.sendChannel1Notification(
+                            contactName,
                             phoneNumber,
                             message,
                             p0
                         )
-
                 }
 
 
             }
-            onSmsReceived?.onSmsReceived()
+
+            Handler().postDelayed({
+                onSmsReceived?.onSmsReceived()
+            }, 1000)
+
+
         }
     }
 
-    private fun numberIsSpamOrBlock(phoneNo: String, context: Context): String {
+    private fun numberIsSpamOrBlock(cDao : ConversationDao,phoneNo: String, context: Context): String {
 
-        val cDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
+
 
         val conversation = cDao.getBlockedAddressCount(true, address = phoneNo)
 

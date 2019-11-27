@@ -22,6 +22,10 @@ data class Conversation(
     var isPinned : Boolean = false
 
 ) {
+    init {
+        time = System.currentTimeMillis().toString()
+    }
+
     override fun equals(other: Any?): Boolean {
         val sms = other as Conversation
         return PhoneNumberUtils.compare(address, sms.address)

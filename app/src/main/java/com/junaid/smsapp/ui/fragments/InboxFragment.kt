@@ -30,15 +30,14 @@ import com.junaid.smsapp.adapters.ItemCLickListener
 import com.junaid.smsapp.adapters.OnSwipeLisetener
 import com.junaid.smsapp.adapters.SwipeToDeleteCallback
 import com.junaid.smsapp.model.Conversation
-import com.junaid.smsapp.revicers.OnSmsReceived
-import com.junaid.smsapp.revicers.SmsReceiver
 import com.junaid.smsapp.ui.ComposeActivity
 import com.junaid.smsapp.ui.viewmodel.ConversationViewModel
+import com.junaid.smsapp.utils.MyPreference
 import com.junaid.smsapp.utils.SmsContract
 import kotlinx.android.synthetic.main.fragment_inbox.*
 import kotlinx.android.synthetic.main.fragment_inbox.view.*
 
-class InboxFragment : Fragment(), OnSmsReceived {
+class InboxFragment : Fragment() {
 
     private lateinit var conversationViewModel: ConversationViewModel
     private lateinit var mRecentlyDeletedItem: Conversation
@@ -67,13 +66,13 @@ class InboxFragment : Fragment(), OnSmsReceived {
         conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
         conversationViewModel.allConversation.observe(viewLifecycleOwner, Observer {
             it?.let {
-                Log.d("TAG", "inViewModel: ")
                 convoList.clear()
                 convoList.addAll(LinkedHashSet<Conversation>(it))
                 if (::adapter.isInitialized)
                     adapter.notifyDataSetChanged()
             }
         })
+
 
         /**check for app permissions
          * in case one or more permissions are not granted
@@ -82,32 +81,20 @@ class InboxFragment : Fragment(), OnSmsReceived {
          **/
         checkAndRequestPermissions()
         setInboxTextChangesLis()
-
         return mView
     }
 
-    override fun onSmsReceived() {
-        refreshConversationList(null)
-    }
 
     override fun onResume() {
         Log.d("TAG", "onResume: ")
-        if (!::conversationViewModel.isInitialized)
             conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
 
         if (isDefault) {
             buildSmsRecyclerView()
-            refreshConversationList(null)
+            syncSms(null)
         }
-        NotificationHelper.removeNotification(context!!, null)
-
-        SmsReceiver.setOnSmsLisenter(this)
+        NotificationHelper.removeNotification(requireContext(), null)
         super.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        SmsReceiver.removeSmsLisenter()
     }
 
     /**
@@ -127,7 +114,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
 
         for (per in appPermissions) {
             if (ContextCompat.checkSelfPermission(
-                    context!!,
+                    requireContext(),
                     per
                 ) != PackageManager.PERMISSION_GRANTED
             )
@@ -144,8 +131,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
             return false
         }
 
-
-        syncSms()
+        askForDefaultSms()
 
         //app has all permissions
         return true
@@ -170,7 +156,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
     }
 
 
-    private fun syncSms() {
+    private fun askForDefaultSms() {
         //all Permissions are given sync msgs
         val myPackageName = activity?.packageName
         if (Telephony.Sms.getDefaultSmsPackage(context) != myPackageName) {
@@ -178,17 +164,19 @@ class InboxFragment : Fragment(), OnSmsReceived {
             intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, myPackageName)
             startActivityForResult(intent, 1)
             isDefault = false
+            MyPreference.getInstance(requireContext()).saveData("syncingFirstTime", "")
         } else {
             isDefault = true
             buildSmsRecyclerView()
-            refreshConversationList(null)
+            syncSms(null)
         }
     }
 
-    private fun refreshConversationList(query: String?) {
+    private fun syncSms(query: String?) {
+        if(MyPreference.getInstance(requireContext()).getData("syncingFirstTime") == "")
         conversationViewModel.insertAllConversation(getAllSms(query))
-    }
 
+    }
 
     private fun buildSmsRecyclerView() {
 
@@ -196,7 +184,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
         val lm = LinearLayoutManager(context)
         lm.isSmoothScrollbarEnabled = true
         mView.recyclerView.layoutManager = lm
-        adapter = ConversationAdapter(context!!, convoList)
+        adapter = ConversationAdapter(requireContext(), convoList)
         val itemTouchHelper = ItemTouchHelper(SwipeToDeleteCallback(adapter))
         itemTouchHelper.attachToRecyclerView(recyclerView)
         mView.recyclerView.adapter = adapter
@@ -252,7 +240,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
         threadId: String
     ) {
 
-        val builder = AlertDialog.Builder(context!!)
+        val builder = AlertDialog.Builder(requireContext())
         builder.setTitle(contactName ?: address)
             .setItems(R.array.convo_options,
                 DialogInterface.OnClickListener { dialog, which ->
@@ -344,14 +332,12 @@ class InboxFragment : Fragment(), OnSmsReceived {
 
         for (i in lstSms.indices) {
             if (lstSms[i].address != "") {
-                if (lstSms[i].address!!.contains("+92")) {
-                    lstSms[i].address = lstSms[i].address!!.replace("+92", "0")
+                if (lstSms[i].address.contains("+92")) {
+                    lstSms[i].address = lstSms[i].address.replace("+92", "0")
                 }
             }
         }
-
         return ArrayList(LinkedHashSet<Conversation>(lstSms))
-
     }
 
 
@@ -428,7 +414,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
 
                 }
             } else {
-                syncSms()
+                askForDefaultSms()
             }
 
         }
@@ -440,7 +426,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 1 && resultCode == Activity.RESULT_OK) {
-            syncSms()
+            askForDefaultSms()
         }
     }
 
@@ -455,7 +441,7 @@ class InboxFragment : Fragment(), OnSmsReceived {
         isCancelable: Boolean
     ): AlertDialog {
 
-        val builder = AlertDialog.Builder(context!!)
+        val builder = AlertDialog.Builder(requireContext())
         builder.setTitle(title).setCancelable(isCancelable).setMessage(msg)
         builder.setPositiveButton(positiveLabel, positiveClickButton)
         builder.setNegativeButton(negativeLabel, negativeClickButton)

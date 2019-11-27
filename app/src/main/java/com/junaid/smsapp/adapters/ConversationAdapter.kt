@@ -4,6 +4,7 @@ package com.junaid.smsapp.adapters
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Typeface
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ import com.amulyakhare.textdrawable.TextDrawable
 import com.junaid.smsapp.R
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.model.room.ConversationDao
+import com.junaid.smsapp.model.room.ConversationRoomDatabase
 import com.junaid.smsapp.utils.ColorGeneratorModified
 
 
@@ -27,7 +29,7 @@ class ConversationAdapter(
     private val generator = ColorGeneratorModified.MATERIAL
     private var itemClickListener: ItemCLickListener? = null
     private var itemSwipeLisetner: OnSwipeLisetener? = null
-   private lateinit var cDao : ConversationDao
+    private var cDao: ConversationDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
 
 
     fun setItemClickListener(itemClickListener: ItemCLickListener) {
@@ -59,12 +61,13 @@ class ConversationAdapter(
 
         currentItem?.apply {
 
-//            contactName = SmsContract.getContactName(address, context)
+            contactName = cDao.getContactName(address)
 
+            Log.d("TAG", "onBindViewHolder: $contactName")
             holder.title.text = contactName ?: address
             holder.snippet.text = msg
-            val color = generator.getColor(currentItem.address)
-            val firstChar =address.first()
+            val color = generator.getColor(contactName ?: address)
+            val firstChar = address.first()
             val drawable = TextDrawable.builder().buildRound(firstChar.toString(), color)
             holder.avatars.setImageDrawable(drawable)
 
@@ -80,7 +83,6 @@ class ConversationAdapter(
             }
 
         }
-
 
 
     }

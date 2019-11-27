@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -22,10 +23,13 @@ import kotlinx.android.synthetic.main.fragment_smart_inbox.view.*
 
 class SmartInboxFragment : Fragment() {
 
+
     lateinit var mView: View
+
     var readSmsList = ArrayList<Conversation>()
     var unreadSmsList = ArrayList<Conversation>()
     var pinnedSms = ArrayList<Conversation>()
+
     private lateinit var conversationViewModel: ConversationViewModel
     private lateinit var sectionAdapter: SectionedRecyclerViewAdapter
 
@@ -39,6 +43,7 @@ class SmartInboxFragment : Fragment() {
         buildRecyclerView()
 
         conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
+
         conversationViewModel.readSms.observe(viewLifecycleOwner, Observer {
             it?.let {
                 Log.d("TAG", "inViewModel: ")
@@ -73,20 +78,23 @@ class SmartInboxFragment : Fragment() {
         mView.rvSmartInbox.setHasFixedSize(true)
 
 
-        val firstSection =
+        val notificationSection =
             HeaderRecyclerViewSection("Notifications", unreadSmsList)
-        val secondSection =
+        val pinnedSections =
             HeaderRecyclerViewSection("Pinned", pinnedSms)
-        val thirdSection =
+        val seenSection =
             HeaderRecyclerViewSection("Seen", readSmsList)
         sectionAdapter = SectionedRecyclerViewAdapter()
-        sectionAdapter.addSection(firstSection)
-        sectionAdapter.addSection(secondSection)
-        sectionAdapter.addSection(thirdSection)
+        sectionAdapter.addSection(notificationSection)
+        sectionAdapter.addSection(pinnedSections)
+        sectionAdapter.addSection(seenSection)
         mView.rvSmartInbox.adapter = sectionAdapter
 
-        
-        firstSection.setOnClickListener(object : ItemCLickListener {
+
+        /**
+         * Sections for notifications or unread sms
+         */
+        notificationSection.setOnClickListener(object : ItemCLickListener {
             override fun longItemClicked(
                 color: Int,
                 contact: String,
@@ -118,7 +126,10 @@ class SmartInboxFragment : Fragment() {
             }
         })
 
-        secondSection.setOnClickListener(object : ItemCLickListener {
+        /**
+         * Section for Pinned sms
+         */
+        pinnedSections.setOnClickListener(object : ItemCLickListener {
             override fun longItemClicked(
                 color: Int,
                 contact: String,
@@ -149,7 +160,11 @@ class SmartInboxFragment : Fragment() {
 
             }
         })
-        thirdSection.setOnClickListener(object : ItemCLickListener {
+
+        /**
+         *Section for Seen sms
+         */
+        seenSection.setOnClickListener(object : ItemCLickListener {
             override fun longItemClicked(
                 color: Int,
                 contact: String,
@@ -178,6 +193,28 @@ class SmartInboxFragment : Fragment() {
                 threadId: String
             ) {
 
+            }
+        })
+
+        ////FooterClickListeners
+        notificationSection.setOnFooterClickListener(object :
+            HeaderRecyclerViewSection.OnFooterClicked {
+            override fun onFooterClicked() {
+                Toast.makeText(requireContext(), "notification Footer", Toast.LENGTH_SHORT).show()
+            }
+        })
+
+        ////FooterClickListeners
+        pinnedSections.setOnFooterClickListener(object : HeaderRecyclerViewSection.OnFooterClicked {
+            override fun onFooterClicked() {
+                Toast.makeText(requireContext(), "Pinned Footer", Toast.LENGTH_SHORT).show()
+            }
+        })
+
+        ////FooterClickListeners
+        seenSection.setOnFooterClickListener(object : HeaderRecyclerViewSection.OnFooterClicked {
+            override fun onFooterClicked() {
+                Toast.makeText(requireContext(), "Seen Footer", Toast.LENGTH_SHORT).show()
             }
         })
 

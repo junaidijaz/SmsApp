@@ -18,9 +18,9 @@ interface ConversationDao {
     fun getConversation(phoneNo: String): List<Conversation>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertAllConversation(conversation: List<Conversation>)
+    suspend fun insertAllConversation(conversation: LinkedHashSet<Conversation>)
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertConversation(conversation: Conversation)
 
     @Query("update conversation set contactName = :name where address = :address")
@@ -56,11 +56,10 @@ interface ConversationDao {
     @Query("SELECT contactName FROM Conversation where address = :phoneNo")
     fun getContactName(phoneNo: String): String?
 
-
-    @Query("Select * from conversation where readState = 0 order by time DESC")
+    @Query("Select * from conversation where readState = 0 and isPinned = 0 order by time DESC")
     fun getUnreadSms(): LiveData<List<Conversation>>
 
-    @Query("Select * from conversation where readState = 1 order by time DESC")
+    @Query("Select * from conversation where readState = 1 and isPinned = 0 order by time DESC")
     fun getReadSms(): LiveData<List<Conversation>>
 
     @Query("Select * from conversation where isPinned = 1 order by time DESC")

@@ -53,6 +53,7 @@ class SmsContract {
 
 
         fun putSmsToInboxDatabase(
+            contactName : String?,
             sms: String,
             _address: String?,
             isSpam: Boolean,
@@ -63,6 +64,7 @@ class SmsContract {
 
             val threadId = cDao.getThreadId(_address!!)
             val conversation = Conversation(
+                contactName = contactName,
                 address = _address,
                 msg = sms,
                 folderName = "inbox",
@@ -72,9 +74,6 @@ class SmsContract {
                 time = System.currentTimeMillis().toString()
             )
             cDao.insertConversation(conversation)
-
-            if (isSpam)
-                return
 
             val contentResolver = context.contentResolver
             val values = ContentValues()
@@ -88,7 +87,13 @@ class SmsContract {
             contentResolver.insert(INBOX_SMS_URI, values)
         }
 
-        private fun putSmsToSentDatabase(sms: String, _address: String?, context: Context) {
+        private fun putSmsToSentDatabase(sms: String, _address: String, context: Context) {
+
+            val cDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
+            val conversation = Conversation(address = _address,msg = sms,readState = MESSAGE_IS_READ.toString(),folderName = "sent")
+
+            cDao.insertConversation(conversation)
+
             // Create SMS row
             val contentResolver = context.contentResolver
             val values = ContentValues()
