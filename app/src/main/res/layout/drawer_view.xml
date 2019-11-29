@@ -46,23 +46,6 @@
 
         </LinearLayout>
 
-    <LinearLayout
-            android:id="@+id/smartInbox"
-            style="@style/DrawerRow">
-
-            <ImageView
-                android:id="@+id/SmartInboxIcon"
-                style="@style/DrawerIcon"
-                android:src="@drawable/ic_archive_black_24dp"
-                tools:tint="?android:attr/textColorSecondary" />
-
-            <TextView
-                style="@style/DrawerText"
-                android:text="@string/smart_inbox" />
-
-        </LinearLayout>
-
-
 
         <LinearLayout
             android:id="@+id/blocking"

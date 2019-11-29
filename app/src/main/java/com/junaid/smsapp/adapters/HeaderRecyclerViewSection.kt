@@ -2,6 +2,7 @@ package com.junaid.smsapp.adapters
 
 
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
@@ -14,6 +15,7 @@ import io.github.luizgrp.sectionedrecyclerviewadapter.SectionParameters
 
 
 class HeaderRecyclerViewSection(
+   private val icDrawable: Drawable?,
     private val title: String,
     private val list: List<Conversation>
 ) :
@@ -79,13 +81,20 @@ class HeaderRecyclerViewSection(
                 iHolder.unread.visibility = View.GONE
             }
 
+            iHolder.btnConversation.setOnClickListener {
+                itemClickListener?.itemClicked(
+                    currentItem.color,
+                    currentItem.address,
+                    currentItem.contactName,
+                    currentItem.id,
+                    currentItem.threadId
+                )
+
+            }
+
             iHolder.btnConversation.setOnLongClickListener {
-
                 if (itemClickListener != null) {
-                    currentItem.readState = "1"
-
                     itemClickListener?.longItemClicked(
-
                         currentItem.color,
                         currentItem.address,
                         currentItem.contactName,
@@ -115,7 +124,7 @@ class HeaderRecyclerViewSection(
         super.onBindFooterViewHolder(holder)
         val footerHolder: FooterViewHolder = holder as FooterViewHolder
 
-        if (list.size < 3) {
+        if (list.size < 4) {
             footerHolder.rootView.visibility = View.GONE
         } else {
             footerHolder.rootView.visibility = View.VISIBLE
@@ -130,6 +139,7 @@ class HeaderRecyclerViewSection(
 
     override fun onBindHeaderViewHolder(holder: RecyclerView.ViewHolder) {
         val hHolder: HeaderViewHolder = holder as HeaderViewHolder
+        holder.headerTitle.setCompoundDrawablesWithIntrinsicBounds(icDrawable,null,null,null)
         hHolder.headerTitle.text = title
     }
 

@@ -14,10 +14,10 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
     val allConversation: LiveData<List<Conversation>>
     val getBlockedNumbers: LiveData<List<Conversation>>
     val spamConversations: LiveData<List<Conversation>>
-    val pinnedSms : LiveData<List<Conversation>>
-    val readSms : LiveData<List<Conversation>>
-    val unreadSms : LiveData<List<Conversation>>
-    var _application : Application = application
+    val pinnedSms: LiveData<List<Conversation>>
+    val readSms: LiveData<List<Conversation>>
+    val unreadSms: LiveData<List<Conversation>>
+    var _application: Application = application
 
     init {
         // the correct WordRepository.
@@ -40,7 +40,7 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
      */
 
     fun insertAllConversation(conversations: ArrayList<Conversation>) = viewModelScope.launch {
-        conversationRepository.insertConversationList(conversations,_application)
+        conversationRepository.insertConversationList(conversations, _application)
     }
 
     fun insertConversation(conversation: Conversation) = viewModelScope.launch {
@@ -60,9 +60,12 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
         conversationRepository.spamAddress(flag, phoneNo)
     }
 
-    fun pinSms(flag : Boolean, address : String) = viewModelScope.launch {
-        conversationRepository.pinSms(flag , address)
+    fun pinSms(flag: Boolean, address: String) = viewModelScope.launch {
+        conversationRepository.pinSms(flag, address)
     }
+
+    fun getContactName(address: String) =  conversationRepository.getContactName(address)
+
 
     fun getSpamConversations() = viewModelScope.launch {
         conversationRepository.getSpamConversation()

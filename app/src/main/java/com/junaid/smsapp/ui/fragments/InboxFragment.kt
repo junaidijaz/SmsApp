@@ -20,21 +20,17 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import com.junaid.smsapp.NotificationHelper
 import com.junaid.smsapp.R
 import com.junaid.smsapp.adapters.ConversationAdapter
 import com.junaid.smsapp.adapters.ItemCLickListener
-import com.junaid.smsapp.adapters.OnSwipeLisetener
-import com.junaid.smsapp.adapters.SwipeToDeleteCallback
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.ui.ComposeActivity
 import com.junaid.smsapp.ui.viewmodel.ConversationViewModel
 import com.junaid.smsapp.utils.MyPreference
 import com.junaid.smsapp.utils.SmsContract
-import kotlinx.android.synthetic.main.fragment_inbox.*
 import kotlinx.android.synthetic.main.fragment_inbox.view.*
 
 class InboxFragment : Fragment() {
@@ -77,7 +73,7 @@ class InboxFragment : Fragment() {
         /**check for app permissions
          * in case one or more permissions are not granted
          * activityCompact.requestPermissions will request permissions
-         * and the control goes to onRequestPermissionsResult() callback method
+         * and the control goes to  onRequestPermissionsResult() callback method
          **/
         checkAndRequestPermissions()
         setInboxTextChangesLis()
@@ -87,7 +83,7 @@ class InboxFragment : Fragment() {
 
     override fun onResume() {
         Log.d("TAG", "onResume: ")
-            conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
+        conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
 
         if (isDefault) {
             buildSmsRecyclerView()
@@ -164,7 +160,7 @@ class InboxFragment : Fragment() {
             intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, myPackageName)
             startActivityForResult(intent, 1)
             isDefault = false
-            MyPreference.getInstance(requireContext()).saveData("syncingFirstTime", "")
+            MyPreference.getInstance(requireContext())?.saveData("syncingFirstTime", "")
         } else {
             isDefault = true
             buildSmsRecyclerView()
@@ -173,8 +169,8 @@ class InboxFragment : Fragment() {
     }
 
     private fun syncSms(query: String?) {
-        if(MyPreference.getInstance(requireContext()).getData("syncingFirstTime") == "")
-        conversationViewModel.insertAllConversation(getAllSms(query))
+        if (MyPreference.getInstance(requireContext())?.getData("syncingFirstTime") == "")
+            conversationViewModel.insertAllConversation(getAllSms(query))
 
     }
 
@@ -185,21 +181,20 @@ class InboxFragment : Fragment() {
         lm.isSmoothScrollbarEnabled = true
         mView.recyclerView.layoutManager = lm
         adapter = ConversationAdapter(requireContext(), convoList)
-        val itemTouchHelper = ItemTouchHelper(SwipeToDeleteCallback(adapter))
-        itemTouchHelper.attachToRecyclerView(recyclerView)
+//        val itemTouchHelper = ItemTouchHelper(SwipeToDeleteCallback(adapter))
+//        itemTouchHelper.attachToRecyclerView(recyclerView)
         mView.recyclerView.adapter = adapter
 
-        adapter.setItemSwipeListener(object : OnSwipeLisetener {
-            override fun onSwipeLeft(position: Int) {
-                deleteItem(position)
-            }
-
-            override fun onSwipeRight(position: Int) {
-                deleteItem(position)
-
-            }
-        })
-
+//        adapter.setItemSwipeListener(object : OnSwipeLisetener {
+//            override fun onSwipeLeft(position: Int) {
+//                deleteItem(position)
+//            }
+//
+//            override fun onSwipeRight(position: Int) {
+//                deleteItem(position)
+//
+//            }
+//        })
 
 
         adapter.setItemClickListener(object : ItemCLickListener {

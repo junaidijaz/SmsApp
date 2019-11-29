@@ -21,7 +21,7 @@ class ConversationRepository(private val conversationDao: ConversationDao) {
 
     suspend fun insertConversationList(convoList: ArrayList<Conversation>, context: Context) {
         conversationDao.insertAllConversation(LinkedHashSet(convoList))
-        MyPreference.getInstance(context).saveData("syncingFirstTime","saved")
+        MyPreference.getInstance(context)?.saveData("syncingFirstTime","saved")
         UpdateNameAsync(conversationDao,context).execute(convoList)
     }
 
@@ -52,6 +52,10 @@ class ConversationRepository(private val conversationDao: ConversationDao) {
     fun pinSms(flag: Boolean, phoneNo: String) {
         conversationDao.markSmsPinned(flag, phoneNo)
     }
+
+    fun getContactName(address: String) =
+        conversationDao.getContactName(address)
+
 
     fun getThreadId(phoneNo: String) = conversationDao.getThreadId(phoneNo)
 

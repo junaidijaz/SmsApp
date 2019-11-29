@@ -21,16 +21,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground">
+    android:background="?attr/selectableItemBackground"
+    android:paddingEnd="60dp">
 
     <TextView
         android:id="@+id/timestamp"
         style="@style/TextSecondary"
-        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:padding="8dp"
+        android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@id/sim"
         app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
@@ -41,10 +42,10 @@
         android:id="@+id/sim"
         android:layout_width="16dp"
         android:layout_height="16dp"
-        android:visibility="invisible"
         android:layout_marginEnd="2dp"
         android:src="@drawable/ic_sim_card_black_24dp"
         android:tint="?android:attr/textColorSecondary"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="@id/timestamp"
         app:layout_constraintEnd_toStartOf="@id/simIndex"
         app:layout_constraintStart_toEndOf="@id/timestamp"
@@ -52,10 +53,10 @@
 
     <TextView
         android:id="@+id/simIndex"
-        android:visibility="invisible"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="?android:attr/textColorSecondary"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="@id/timestamp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/sim"
@@ -67,14 +68,13 @@
         android:id="@+id/avatar"
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:visibility="gone"
         android:layout_marginStart="12dp"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@id/body"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/body"
-        style="@style/TextPrimary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
@@ -85,6 +85,7 @@
         android:background="@drawable/message_only"
         android:gravity="start|center_vertical"
         android:minHeight="36dp"
+        android:textColor="@color/black"
         app:layout_constrainedWidth="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0"

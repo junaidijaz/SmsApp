@@ -4,11 +4,14 @@ import android.app.PendingIntent
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.database.Cursor
 import android.net.Uri
 import android.provider.ContactsContract
 import android.telephony.SmsManager
+import android.util.Log
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.model.room.ConversationRoomDatabase
+
 
 /**
  * Created by R Ankit on 25-12-2016.
@@ -53,7 +56,7 @@ class SmsContract {
 
 
         fun putSmsToInboxDatabase(
-            contactName : String?,
+            contactName: String?,
             sms: String,
             _address: String?,
             isSpam: Boolean,
@@ -90,7 +93,12 @@ class SmsContract {
         private fun putSmsToSentDatabase(sms: String, _address: String, context: Context) {
 
             val cDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
-            val conversation = Conversation(address = _address,msg = sms,readState = MESSAGE_IS_READ.toString(),folderName = "sent")
+            val conversation = Conversation(
+                address = _address,
+                msg = sms,
+                readState = MESSAGE_IS_READ.toString(),
+                folderName = "sent"
+            )
 
             cDao.insertConversation(conversation)
 
@@ -128,6 +136,36 @@ class SmsContract {
             return contactName
         }
 
+        fun markMessageRead(
+            context: Context,
+            threadId: String
+        ) {
+            val uri = Uri.parse("content://sms/inbox")
+            val cursor: Cursor? = context.contentResolver.query(uri, null, null, null, null)
+            try {
+                while (cursor!!.moveToNext()) {
+                    if (cursor.getString(cursor.getColumnIndex(THREADID)).equals(threadId)) {
+
+                        val SmsMessageId: String =
+                            cursor.getString(cursor.getColumnIndex("_id"))
+                        val values = ContentValues()
+                        values.put("read", true)
+                        context.contentResolver.update(
+                            Uri.parse("content://sms/inbox"),
+                                values,
+                            "_id=$SmsMessageId",
+                            null
+                        )
+                        return
+
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("Mark Read", "Error in Read: $e")
+                cursor?.close()
+            }
+            cursor?.close()
+        }
 
         fun sendMySMS(message: String, phoneNumber: String, context: Context) {
             val sms = SmsManager.getDefault()

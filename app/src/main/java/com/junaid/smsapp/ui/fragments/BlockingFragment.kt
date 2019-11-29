@@ -60,7 +60,7 @@ class BlockingFragment : Fragment() {
                 conversations.clear()
                 conversations.addAll(LinkedHashSet<Conversation>(it))
                 for (k in conversations) {
-                    addresses.add(SmsContract.getContactName(k.address, context!!) ?: k.address!!)
+                    addresses.add(viewModel.getContactName(k.address) ?: k.address)
                 }
                 adapter.notifyDataSetChanged()
             }

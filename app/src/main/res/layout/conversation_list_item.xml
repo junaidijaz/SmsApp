@@ -9,9 +9,9 @@
     android:background="?attr/selectableItemBackground"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingStart="16dp"
+    android:paddingStart="@dimen/mainMarginEndStart"
     android:paddingTop="12dp"
-    android:paddingEnd="16dp"
+    android:paddingEnd="@dimen/mainMarginEndStart"
     android:paddingBottom="12dp">
 
     <ImageView
@@ -29,6 +29,8 @@
         android:id="@+id/title"
         style="@style/TextPrimary"
         android:layout_width="0dp"
+        android:fontFamily="@font/avenir_medium_09"
+        android:textColor="@color/colorPerryWinkle"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -47,6 +49,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
+        android:fontFamily="@font/avenir_medium_09"
         android:ellipsize="end"
         android:maxLines="1"
         app:layout_constraintBottom_toBottomOf="parent"

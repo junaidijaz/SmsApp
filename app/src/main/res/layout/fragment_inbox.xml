@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".ui.fragments.InboxFragment">
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:animateLayoutChanges="true">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
@@ -23,7 +19,18 @@
             app:layout_constraintBottom_toBottomOf="parent"
             tools:listitem="@layout/conversation_list_item" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:layout_width="@dimen/_54sdp"
+            android:backgroundTint="@color/colorPerryWinkle"
+            android:src="@drawable/ic_new_sms"
+            android:clickable="true"
+            android:focusable="true"
+            android:id="@+id/fabNewSms"
+            app:fabCustomSize="@dimen/_54sdp"
+            android:layout_height="@dimen/_54sdp"
+            android:layout_marginEnd="@dimen/mainMarginEndStart"
+            android:layout_marginBottom="@dimen/mainMarginEndStart"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-
-</FrameLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

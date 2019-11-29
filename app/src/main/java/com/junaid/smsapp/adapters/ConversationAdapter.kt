@@ -74,11 +74,11 @@ class ConversationAdapter(
             if (readState.equals("0")) {
                 holder.title.setTypeface(holder.title.typeface, Typeface.BOLD)
                 holder.snippet.setTypeface(holder.snippet.typeface, Typeface.BOLD)
-                holder.snippet.setTextColor(ContextCompat.getColor(context, R.color.black))
+//                holder.snippet.setTextColor(ContextCompat.getColor(context, R.color.black))
                 holder.unread.visibility = View.VISIBLE
             } else {
-                holder.title.setTypeface(null, Typeface.NORMAL)
-                holder.snippet.setTypeface(null, Typeface.NORMAL)
+                holder.title.setTypeface(holder.title.typeface, Typeface.NORMAL)
+                holder.snippet.setTypeface(holder.snippet.typeface, Typeface.NORMAL)
                 holder.unread.visibility = View.GONE
             }
 
@@ -130,10 +130,10 @@ class ConversationAdapter(
 
                     itemClickListener.itemClicked(
                         data[adapterPosition].color,
-                        data[adapterPosition].address!!,
+                        data[adapterPosition].address,
                         data[adapterPosition].contactName,
-                        data[adapterPosition].id!!,
-                        data[adapterPosition].threadId!!
+                        data[adapterPosition].id,
+                        data[adapterPosition].threadId
                     )
                 }
             }

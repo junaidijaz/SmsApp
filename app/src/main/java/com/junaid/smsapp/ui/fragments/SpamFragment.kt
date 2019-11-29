@@ -1,6 +1,7 @@
 package com.junaid.smsapp.ui.fragments
 
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +14,10 @@ import com.junaid.smsapp.R
 import com.junaid.smsapp.adapters.ConversationAdapter
 import com.junaid.smsapp.adapters.ItemCLickListener
 import com.junaid.smsapp.model.Conversation
+import com.junaid.smsapp.ui.ComposeActivity
 import com.junaid.smsapp.ui.viewmodel.ConversationViewModel
+import com.junaid.smsapp.utils.SmsContract.Companion.ADDRESS
+import com.junaid.smsapp.utils.SmsContract.Companion.THREADID
 import kotlinx.android.synthetic.main.fragment_spaming.view.*
 
 
@@ -39,7 +43,7 @@ class SpamFragment : Fragment(), ItemCLickListener {
         viewModel.spamConversations.observe(viewLifecycleOwner, Observer {
             it?.let {
                 conversations.clear()
-                conversations.addAll(it)
+                conversations.addAll(LinkedHashSet<Conversation>(it))
                 adapter.notifyDataSetChanged()
             }
         })
@@ -48,7 +52,7 @@ class SpamFragment : Fragment(), ItemCLickListener {
     }
 
     private fun buildRecyclerView() {
-        adapter = ConversationAdapter(context!!, conversations)
+        adapter = ConversationAdapter(requireContext(), conversations)
         mView.rvSpaming.adapter = adapter
         adapter.setItemClickListener(this)
     }
@@ -61,7 +65,9 @@ class SpamFragment : Fragment(), ItemCLickListener {
         id: String,
         threadId: String
     ) {
-
+        val intent = Intent(requireContext(),ComposeActivity::class.java)
+        intent.putExtra(ADDRESS,contact)
+        startActivity(intent)
     }
 
     override fun longItemClicked(

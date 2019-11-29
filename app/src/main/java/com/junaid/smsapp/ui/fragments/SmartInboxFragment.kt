@@ -1,13 +1,16 @@
 package com.junaid.smsapp.ui.fragments
 
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -16,7 +19,10 @@ import com.junaid.smsapp.R
 import com.junaid.smsapp.adapters.HeaderRecyclerViewSection
 import com.junaid.smsapp.adapters.ItemCLickListener
 import com.junaid.smsapp.model.Conversation
+import com.junaid.smsapp.ui.ComposeActivity
 import com.junaid.smsapp.ui.viewmodel.ConversationViewModel
+import com.junaid.smsapp.utils.SmartInboxOptions
+import com.junaid.smsapp.utils.SmsContract.Companion.ADDRESS
 import io.github.luizgrp.sectionedrecyclerviewadapter.SectionedRecyclerViewAdapter
 import kotlinx.android.synthetic.main.fragment_smart_inbox.view.*
 
@@ -77,13 +83,27 @@ class SmartInboxFragment : Fragment() {
         mView.rvSmartInbox.layoutManager = LinearLayoutManager(context)
         mView.rvSmartInbox.setHasFixedSize(true)
 
-
         val notificationSection =
-            HeaderRecyclerViewSection("Notifications", unreadSmsList)
+            HeaderRecyclerViewSection(
+                ContextCompat.getDrawable(
+                    requireContext(),
+                    R.drawable.ic_notifications_black_24dp
+                ), "Notifications", unreadSmsList
+            )
         val pinnedSections =
-            HeaderRecyclerViewSection("Pinned", pinnedSms)
+            HeaderRecyclerViewSection(
+                ContextCompat.getDrawable(
+                    requireContext(),
+                    R.drawable.ic_pin
+                ), "Pinned", pinnedSms
+            )
         val seenSection =
-            HeaderRecyclerViewSection("Seen", readSmsList)
+            HeaderRecyclerViewSection(
+                ContextCompat.getDrawable(
+                    requireContext(),
+                    R.drawable.ic_seen_black_24dp
+                ), "Seen", readSmsList
+            )
         sectionAdapter = SectionedRecyclerViewAdapter()
         sectionAdapter.addSection(notificationSection)
         sectionAdapter.addSection(pinnedSections)
@@ -112,7 +132,6 @@ class SmartInboxFragment : Fragment() {
                         it.isPinned
                     )
                 }
-
             }
 
             override fun itemClicked(
@@ -122,7 +141,7 @@ class SmartInboxFragment : Fragment() {
                 id: String,
                 threadId: String
             ) {
-
+                startComposeActivity(contact)
             }
         })
 
@@ -157,7 +176,7 @@ class SmartInboxFragment : Fragment() {
                 id: String,
                 threadId: String
             ) {
-
+                startComposeActivity(contact)
             }
         })
 
@@ -192,33 +211,48 @@ class SmartInboxFragment : Fragment() {
                 id: String,
                 threadId: String
             ) {
-
+                startComposeActivity(contact)
             }
         })
 
-        ////FooterClickListeners
+        ////FooterClickListeners Notifications
         notificationSection.setOnFooterClickListener(object :
             HeaderRecyclerViewSection.OnFooterClicked {
             override fun onFooterClicked() {
-                Toast.makeText(requireContext(), "notification Footer", Toast.LENGTH_SHORT).show()
+                replaceFrameLayout(SmartInboxOptions.Notifications)
+
             }
         })
 
-        ////FooterClickListeners
+        ////FooterClickListeners Pinned
         pinnedSections.setOnFooterClickListener(object : HeaderRecyclerViewSection.OnFooterClicked {
             override fun onFooterClicked() {
-                Toast.makeText(requireContext(), "Pinned Footer", Toast.LENGTH_SHORT).show()
+                replaceFrameLayout(SmartInboxOptions.Pinned)
             }
         })
 
-        ////FooterClickListeners
+        ////FooterClickListeners Seen
         seenSection.setOnFooterClickListener(object : HeaderRecyclerViewSection.OnFooterClicked {
             override fun onFooterClicked() {
-                Toast.makeText(requireContext(), "Seen Footer", Toast.LENGTH_SHORT).show()
+              replaceFrameLayout(SmartInboxOptions.Seen)
             }
         })
 
 
+    }
+
+    private fun replaceFrameLayout(selectedOptions: SmartInboxOptions) {
+        val frag =  SpecificInboxTypeFragment.getInstance(selectedOptions)
+       activity?.also {
+           it.supportFragmentManager.beginTransaction().replace(R.id.flMain, frag)
+               .addToBackStack(null).commit()
+       }
+    }
+
+    private fun startComposeActivity(address: String) {
+        val intent = Intent(requireContext(), ComposeActivity::class.java)
+        intent.putExtra(ADDRESS, address)
+        startActivity(intent)
     }
 
     private fun showConversationDialog(

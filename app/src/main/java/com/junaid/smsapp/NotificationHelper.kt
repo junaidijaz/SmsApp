@@ -15,7 +15,6 @@ import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.model.room.ConversationRoomDatabase
 import com.junaid.smsapp.revicers.DirectReplyReceiver
 import com.junaid.smsapp.ui.ComposeActivity
-import com.junaid.smsapp.utils.SmsContract
 
 class NotificationHelper {
 
@@ -75,8 +74,7 @@ class NotificationHelper {
 
 
             val messagingStyle = NotificationCompat.MessagingStyle("Me")
-            messagingStyle.conversationTitle =
-                SmsContract.getContactName(phoneNo, context) ?: phoneNo
+            messagingStyle.conversationTitle = cDao.getContactName(phoneNo) ?: phoneNo
 
             for (chatMessage in notificationMessages.get(threadId)) {
                 val notificationMessage = NotificationCompat.MessagingStyle.Message(

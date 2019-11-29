@@ -6,10 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import com.junaid.smsapp.R
-import com.junaid.smsapp.ui.fragments.BlockingFragment
-import com.junaid.smsapp.ui.fragments.InboxFragment
-import com.junaid.smsapp.ui.fragments.SmartInboxFragment
-import com.junaid.smsapp.ui.fragments.SpamFragment
+import com.junaid.smsapp.ui.fragments.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.drawer_view.*
 
@@ -26,7 +23,7 @@ class MainActivity : AppCompatActivity()  {
         setSupportActionBar(toolbar)
         settingToolbar()
         settingDrawerClickListeners()
-        loadFragment(InboxFragment())
+        loadFragment(InboxViewPagerFragment())
     }
 
     private fun loadFragment(fragment : Fragment) {
@@ -36,7 +33,7 @@ class MainActivity : AppCompatActivity()  {
 
     private fun settingDrawerClickListeners() {
         inbox.setOnClickListener {
-            loadFragment(InboxFragment())
+            loadFragment(InboxViewPagerFragment())
             drawerLayout.closeDrawer(GravityCompat.START)
         }
         archived.setOnClickListener {
@@ -48,10 +45,6 @@ class MainActivity : AppCompatActivity()  {
             drawerLayout.closeDrawer(GravityCompat.START)
         }
 
-        smartInbox.setOnClickListener {
-            loadFragment(SmartInboxFragment())
-            drawerLayout.closeDrawer(GravityCompat.START)
-        }
     }
 
     private fun settingToolbar() {

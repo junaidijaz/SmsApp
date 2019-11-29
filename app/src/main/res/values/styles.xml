@@ -49,6 +49,19 @@
         <item name="textSize">toolbar</item>
     </style>
 
+    <style name="InboxTabLayout" parent="Widget.Design.TabLayout">
+        <item name="textAllCaps">false</item>
+        <item name="android:fontFamily">@font/avenir_heavy_05</item>
+        <item name="android:textSize">@dimen/_8ssp</item>
+        <item name="tabMode">fixed</item>
+        <item name="android:layout_marginStart">@dimen/mainMarginEndStart</item>
+        <item name="android:layout_marginEnd">@dimen/mainMarginEndStart</item>
+        <item name="tabIndicatorColor">@color/colorPerryWinkle</item>
+        <item name="tabTextAppearance">@android:style/TextAppearance.Widget.TabWidget</item>
+
+    </style>
+
+
     <style name="PreferenceCategory">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

@@ -3,6 +3,7 @@ package com.junaid.smsapp.ui
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.junaid.smsapp.NotificationHelper
 import com.junaid.smsapp.R
 import com.junaid.smsapp.adapters.ComposeChatAdapter
@@ -12,10 +13,9 @@ import com.junaid.smsapp.model.room.ConversationRoomDatabase
 import com.junaid.smsapp.observers.SmsObserver
 import com.junaid.smsapp.revicers.OnSmsReceived
 import com.junaid.smsapp.revicers.SmsReceiver
+import com.junaid.smsapp.ui.viewmodel.ComposeViewModel
 import com.junaid.smsapp.utils.SmsContract
 import com.junaid.smsapp.utils.SmsContract.Companion.ADDRESS
-import com.junaid.smsapp.utils.SmsContract.Companion.CONTACTNAME
-import com.junaid.smsapp.utils.SmsContract.Companion.THREADID
 import kotlinx.android.synthetic.main.compose_activity.*
 
 
@@ -25,10 +25,12 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener, OnSm
         refreshConversation()
     }
 
+    lateinit var composeViewModel: ComposeViewModel
+
     lateinit var cDao: ConversationDao
 
     var contactName: String? = null
-    var threadId: String? = null
+    var threadId: String = ""
     var smsList = ArrayList<Conversation>()
     var fromNotification = false
 
@@ -44,9 +46,10 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener, OnSm
         super.onCreate(savedInstanceState)
         setContentView(R.layout.compose_activity)
         cDao = ConversationRoomDatabase.getDatabase(this).conversationDao()
+        composeViewModel = ViewModelProvider(this).get(ComposeViewModel::class.java)
+
 
         getContactInfo()
-
         toolbar.title = contactName ?: address
         toolbar.subtitle = if (contactName != null) address else ""
         smsList = ArrayList(getSmsForContact(threadId))
@@ -64,8 +67,6 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener, OnSm
                 refreshConversation()
             }
         }
-
-
     }
 
     private fun getContactInfo() {
@@ -83,6 +84,12 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener, OnSm
         contactName = cDao.getContactName(address)
         threadId = cDao.getThreadId(address)
 
+        changeConversationReadState(SmsContract.MESSAGE_IS_READ.toString(), threadId)
+
+    }
+
+    private fun changeConversationReadState(readState: String, threadId: String) {
+        composeViewModel.changeConversationReadState(readState, threadId)
     }
 
 
