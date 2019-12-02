@@ -1,36 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:animateLayoutChanges="true"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".ui.fragments.InboxFragment">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:listitem="@layout/conversation_list_item" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabNewSms"
+        android:layout_width="@dimen/_54sdp"
+        android:layout_height="@dimen/_54sdp"
+        android:layout_marginEnd="@dimen/mainMarginEndStart"
+        android:layout_marginBottom="@dimen/mainMarginEndStart"
+        android:backgroundTint="@color/colorPerryWinkle"
+        android:clickable="true"
+        android:focusable="true"
+        android:src="@drawable/ic_new_sms"
+        app:fabCustomSize="@dimen/_54sdp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabSearchSms"
+        android:layout_width="@dimen/_54sdp"
+        android:layout_height="@dimen/_54sdp"
+        android:layout_marginStart="@dimen/mainMarginEndStart"
+        android:layout_marginBottom="@dimen/mainMarginEndStart"
+        android:backgroundTint="@color/white"
+        android:clickable="true"
+        android:focusable="true"
+        android:src="@drawable/ic_search"
+        app:fabCustomSize="@dimen/_54sdp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/searchViewLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="@dimen/_18sdp"
+        android:layout_marginBottom="@dimen/_18sdp"
+        android:paddingBottom="@dimen/_8sdp"
+        android:layout_marginEnd="@dimen/_26sdp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <EditText
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            tools:listitem="@layout/conversation_list_item" />
+            android:elevation="4dp"
+            android:id="@+id/etSearchSms"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rounded_rectangle_22dp"
+            android:hint="@string/search"
+            android:padding="10dp" />
+
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="@dimen/_54sdp"
-            android:backgroundTint="@color/colorPerryWinkle"
-            android:src="@drawable/ic_new_sms"
+            android:id="@+id/btnHideSearch"
+            android:layout_width="@dimen/_45sdp"
+            android:layout_height="@dimen/_45sdp"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
             android:clickable="true"
             android:focusable="true"
-            android:id="@+id/fabNewSms"
-            app:fabCustomSize="@dimen/_54sdp"
-            android:layout_height="@dimen/_54sdp"
-            android:layout_marginEnd="@dimen/mainMarginEndStart"
-            android:layout_marginBottom="@dimen/mainMarginEndStart"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/white"
+            android:src="@drawable/ic_clear"
+            app:fabCustomSize="@dimen/_45sdp"
+
+            />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

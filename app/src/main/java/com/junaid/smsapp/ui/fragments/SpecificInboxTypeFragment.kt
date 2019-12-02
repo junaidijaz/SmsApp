@@ -59,6 +59,9 @@ class SpecificInboxTypeFragment : Fragment() {
             }
         })
 
+        (mView.fabNewSms as View).visibility = View.GONE
+        (mView.fabSearchSms as View).visibility = View.GONE
+
         buildSmsRecyclerView()
 
         return mView

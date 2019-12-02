@@ -11,7 +11,6 @@ import kotlinx.coroutines.launch
 
 class ConversationViewModel(application: Application) : AndroidViewModel(application) {
     private val conversationRepository: ConversationRepository
-    val allConversation: LiveData<List<Conversation>>
     val getBlockedNumbers: LiveData<List<Conversation>>
     val spamConversations: LiveData<List<Conversation>>
     val pinnedSms: LiveData<List<Conversation>>
@@ -23,7 +22,6 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
         // the correct WordRepository.
         val conversationDao = ConversationRoomDatabase.getDatabase(application).conversationDao()
         conversationRepository = ConversationRepository(conversationDao)
-        allConversation = conversationRepository.allConversations
         getBlockedNumbers = conversationRepository.getAllBlockedConversations
         spamConversations = conversationRepository.spamConversations
         pinnedSms = conversationRepository.pinnedSms
@@ -41,6 +39,11 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
 
     fun insertAllConversation(conversations: ArrayList<Conversation>) = viewModelScope.launch {
         conversationRepository.insertConversationList(conversations, _application)
+    }
+
+    fun getAllConversation(filter : String?) : LiveData<List<Conversation>>
+    {
+        return conversationRepository.getAllConversation(filter)
     }
 
     fun insertConversation(conversation: Conversation) = viewModelScope.launch {

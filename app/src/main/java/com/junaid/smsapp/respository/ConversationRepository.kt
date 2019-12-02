@@ -2,6 +2,7 @@ package com.junaid.smsapp.respository
 
 import android.content.Context
 import android.os.AsyncTask
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.model.room.ConversationDao
@@ -11,7 +12,7 @@ import com.junaid.smsapp.utils.SmsContract
 class ConversationRepository(private val conversationDao: ConversationDao) {
 
 
-    var allConversations = conversationDao.getAllConversation(false)
+
     var getAllBlockedConversations = conversationDao.getAllBlockedConversations(true)
     var spamConversations = conversationDao.getAllSpamConversations()
     var unReadSms = conversationDao.getUnreadSms()
@@ -59,6 +60,10 @@ class ConversationRepository(private val conversationDao: ConversationDao) {
 
 
     fun getThreadId(phoneNo: String) = conversationDao.getThreadId(phoneNo)
+
+    fun getAllConversation(filter: String?): LiveData<List<Conversation>> {
+        return conversationDao.getAllConversation(filter)
+    }
 
 
     class UpdateNameAsync internal constructor(private val dao: ConversationDao, var context: Context) :

@@ -11,8 +11,8 @@ import com.junaid.smsapp.model.Conversation
 interface ConversationDao {
 
 
-    @Query("SELECT * from Conversation where isSpam = :isSpam and isBlocked = :isSpam ORDER BY time DESC")
-    fun getAllConversation(isSpam: Boolean): LiveData<List<Conversation>>
+    @Query("SELECT * from Conversation where isSpam = 0 and isBlocked = 0 and msg like '%' || :filter || '%' or contactName like '%' || :filter || '%' ORDER BY time DESC")
+    fun getAllConversation(filter: String?): LiveData<List<Conversation>>
 
     @Query("SELECT * from Conversation where address = :phoneNo")
     fun getConversation(phoneNo: String): List<Conversation>

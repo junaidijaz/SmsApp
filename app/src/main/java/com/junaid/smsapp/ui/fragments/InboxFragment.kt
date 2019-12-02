@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.widget.addTextChangedListener
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -26,7 +27,6 @@ import com.junaid.smsapp.NotificationHelper
 import com.junaid.smsapp.R
 import com.junaid.smsapp.adapters.ConversationAdapter
 import com.junaid.smsapp.adapters.ItemCLickListener
-import com.junaid.smsapp.model.ContactAddress
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.ui.ComposeActivity
 import com.junaid.smsapp.ui.viewmodel.ContactsViewModel
@@ -42,6 +42,7 @@ class InboxFragment : Fragment() {
     private lateinit var mRecentlyDeletedItem: Conversation
     private var mRecentlyDeletedItemPosition = -1
     private var recipients = ArrayList<String>()
+    private var isSearching = false
 
 
     private val appPermissions = arrayOf(
@@ -52,6 +53,7 @@ class InboxFragment : Fragment() {
 
     var isDefault: Boolean = false //is this app is default
     var convoList = ArrayList<Conversation>()
+    var tempFullconvoList = ArrayList<Conversation>()
 
     lateinit var adapter: ConversationAdapter
     lateinit var mView: View
@@ -64,27 +66,64 @@ class InboxFragment : Fragment() {
         // Inflate the layout for this fragment
         mView = inflater.inflate(R.layout.fragment_inbox, container, false)
 
+        isSearching = false
+
         conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
         contactsViewModel = ViewModelProvider(this).get(ContactsViewModel::class.java)
-        conversationViewModel.allConversation.observe(viewLifecycleOwner, Observer {
-            it?.let {
-                convoList.clear()
-                convoList.addAll(LinkedHashSet<Conversation>(it))
-                if (::adapter.isInitialized)
-                    adapter.notifyDataSetChanged()
-            }
-        })
+        conversationViewModel.getAllConversation("")
+            .observe(viewLifecycleOwner, Observer {
+                it?.let {
+                    if (!isSearching) {
+                        convoList.clear()
+                        tempFullconvoList.clear()
+                        convoList.addAll(LinkedHashSet<Conversation>(it))
+                        tempFullconvoList.addAll(LinkedHashSet<Conversation>(it))
+                        if (::adapter.isInitialized)
+                            adapter.notifyDataSetChanged()
+                    }
+                }
+            })
 
         mView.fabNewSms.setOnClickListener {
             recipients.clear()
-            for(item in convoList)
-            {
+            for (item in convoList) {
                 recipients.add(item.address)
             }
-            val intent = Intent(requireContext(),ComposeActivity::class.java)
-            intent.putStringArrayListExtra("recipients",recipients)
-            intent.putExtra("fromFab","new")
+            val intent = Intent(requireContext(), ComposeActivity::class.java)
+            intent.putStringArrayListExtra("recipients", recipients)
+            intent.putExtra("fromFab", "new")
             startActivity(intent)
+        }
+
+        mView.fabSearchSms.setOnClickListener {
+            isSearching = !isSearching
+            mView.searchViewLayout.visibility = View.VISIBLE
+            showNewSearchFab(false)
+        }
+
+        mView.btnHideSearch.setOnClickListener {
+
+            showNewSearchFab(true)
+            mView.searchViewLayout.visibility = View.GONE
+            convoList.clear()
+            convoList.addAll(tempFullconvoList)
+            adapter.notifyDataSetChanged()
+            isSearching = !isSearching
+        }
+
+
+        mView.etSearchSms.addTextChangedListener {
+            Log.d("TAG", "onCreateView:  ${it.toString()}")
+            conversationViewModel.getAllConversation(it.toString())
+                .observe(viewLifecycleOwner, Observer {
+                    if (isSearching) {
+                        convoList.clear()
+                        convoList.addAll(LinkedHashSet<Conversation>(it))
+                        if (::adapter.isInitialized)
+                            adapter.notifyDataSetChanged()
+                    }
+                })
+
         }
 
         /**check for app permissions
@@ -97,6 +136,17 @@ class InboxFragment : Fragment() {
         return mView
     }
 
+    private fun showNewSearchFab(flag: Boolean) {
+        if (flag) {
+            (mView.fabSearchSms as View).visibility = View.VISIBLE
+            (mView.fabNewSms as View).visibility = View.VISIBLE
+        } else {
+            (mView.fabSearchSms as View).visibility = View.GONE
+            (mView.fabNewSms as View).visibility = View.GONE
+
+        }
+    }
+
 
     override fun onResume() {
         Log.d("TAG", "onResume: ")
@@ -104,7 +154,7 @@ class InboxFragment : Fragment() {
 
         if (isDefault) {
             buildSmsRecyclerView()
-            syncSms(null)
+            syncSms()
         }
         NotificationHelper.removeNotification(requireContext(), null)
         super.onResume()
@@ -182,13 +232,13 @@ class InboxFragment : Fragment() {
         } else {
             isDefault = true
             buildSmsRecyclerView()
-            syncSms(null)
+            syncSms()
         }
     }
 
-    private fun syncSms(query: String?) {
+    private fun syncSms() {
         if (MyPreference.getInstance(requireContext())?.getData("syncingFirstTime") == "")
-            conversationViewModel.insertAllConversation(getAllSms(query))
+            conversationViewModel.insertAllConversation(getAllSms())
 
         syncContacts()
     }
@@ -377,24 +427,17 @@ class InboxFragment : Fragment() {
     }
 
 
-    private fun getAllSms(filter: String? = null): ArrayList<Conversation> {
+    private fun getAllSms(): ArrayList<Conversation> {
 
         val lstSms = ArrayList<Conversation>()
-        var selectionArgs: Array<String>? = null
-        var selection: String? = null
-
-        if (!filter.isNullOrEmpty()) {
-            selection = SmsContract.SMS_SELECTION_SEARCH
-            selectionArgs = arrayOf("%$filter%", "%$filter%")
-        }
 
         val cr = activity?.contentResolver
         val c =
             cr?.query(
                 SmsContract.ALL_SMS_URI,
                 null,
-                selection,
-                selectionArgs,
+                null,
+                null,
                 SmsContract.SORT_DESC
             )
         val totalSMS = c!!.count

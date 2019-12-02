@@ -67,8 +67,8 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener, OnSm
                 message.text.clear()
                 if (chattedRecipents.size > 0) {
                     SmsObserver(this, address, sms).start()
-                    val conversation = Conversation(msg = sms,address = address)
-                    SmsContract.putNewConversationInSentFolder(conversation,this,false)
+                    val conversation = Conversation(msg = sms, address = address)
+                    SmsContract.putNewConversationInSentFolder(conversation, this, false)
                 } else {
                     SmsContract.sendMySMS(sms, address, this)
                     refreshConversation()
@@ -128,8 +128,6 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener, OnSm
             } else {
 
             }
-
-
         }
     }
 
@@ -146,13 +144,13 @@ class ComposeActivity : AppCompatActivity(), SmsObserver.OnSmsSentListener, OnSm
     override fun onSmsSent(threadId: String, smsId: String) {
         this.threadId = threadId
         val convo = Conversation(
-                address = address,
-                contactName = contactName,
-                msg = sms,
-                threadId = threadId
-            )
+            address = address,
+            contactName = contactName,
+            msg = sms,
+            threadId = threadId
+        )
         etAutoComplete.visibility = View.GONE
-        SmsContract.putNewConversationInSentFolder(convo, this,true)
+        SmsContract.putNewConversationInSentFolder(convo, this, true)
         setToolbar()
         refreshConversation()
     }
