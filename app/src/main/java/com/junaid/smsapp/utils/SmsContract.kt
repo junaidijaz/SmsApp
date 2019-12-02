@@ -1,6 +1,7 @@
 package com.junaid.smsapp.utils
 
 import android.app.PendingIntent
+import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -9,6 +10,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import android.telephony.SmsManager
 import android.util.Log
+import com.junaid.smsapp.model.ContactAddress
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.model.room.ConversationRoomDatabase
 
@@ -73,7 +75,7 @@ class SmsContract {
                 folderName = "inbox",
                 isSpam = isSpam,
                 readState = "0",
-                threadId = threadId,
+                threadId = threadId!!,
                 time = System.currentTimeMillis().toString()
             )
             cDao.insertConversation(conversation)
@@ -90,7 +92,7 @@ class SmsContract {
             contentResolver.insert(INBOX_SMS_URI, values)
         }
 
-        private fun putSmsToSentDatabase(sms: String, _address: String, context: Context) {
+        fun putSmsToSentDatabase(sms: String, _address: String, context: Context) {
 
             val cDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
             val conversation = Conversation(
@@ -112,7 +114,83 @@ class SmsContract {
             values.put(SEEN, MESSAGE_IS_SEEN)
             values.put(BODY, sms)
             // Push row into the SMS table
-            contentResolver.insert(INBOX_SMS_URI, values)
+            contentResolver.insert(SENT_SMS_URI, values)
+        }
+
+        fun putNewConversationInSentFolder(
+            conversation: Conversation,
+            context: Context,
+            sent: Boolean
+        ) {
+
+            if (sent) {
+                val cDao = ConversationRoomDatabase.getDatabase(context).conversationDao()
+                cDao.insertConversation(conversation)
+
+            } else {
+                sendMySMS(conversation.msg!!, conversation.address, context, true)
+                // Create SMS row
+                val contentResolver = context.contentResolver
+                val values = ContentValues()
+                values.put(ADDRESS, conversation.address)
+                values.put(DATE, System.currentTimeMillis())
+                values.put(READ, MESSAGE_IS_READ)
+                values.put(TYPE, MESSAGE_TYPE_SENT)
+                values.put(SEEN, MESSAGE_IS_SEEN)
+                values.put(BODY, conversation.msg)
+                // Push row into the SMS table
+                contentResolver.insert(SENT_SMS_URI, values)
+            }
+        }
+
+
+        fun getContactList(context: Context): ArrayList<ContactAddress> {
+            val contactsList = ArrayList<ContactAddress>()
+            val cr: ContentResolver = context.contentResolver
+            val cur = cr.query(
+                ContactsContract.Contacts.CONTENT_URI,
+                null, null, null, null
+            )
+            if (cur?.count ?: 0 > 0) {
+                while (cur != null && cur.moveToNext()) {
+                    val id = cur.getString(
+                        cur.getColumnIndex(ContactsContract.Contacts._ID)
+                    )
+                    val name = cur.getString(
+                        cur.getColumnIndex(
+                            ContactsContract.Contacts.DISPLAY_NAME
+                        )
+                    )
+                    if (cur.getInt(
+                            cur.getColumnIndex(
+                                ContactsContract.Contacts.HAS_PHONE_NUMBER
+                            )
+                        ) > 0
+                    ) {
+                        val pCur = cr.query(
+                            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            null,
+                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                            arrayOf(id),
+                            null
+                        )
+                        while (pCur!!.moveToNext()) {
+                            val phoneNo = pCur.getString(
+                                pCur.getColumnIndex(
+                                    ContactsContract.CommonDataKinds.Phone.NUMBER
+                                )
+                            )
+
+                            val obj = ContactAddress(name, phoneNo)
+                            contactsList.add(obj)
+
+                        }
+                        pCur.close()
+                    }
+                }
+            }
+            cur?.close()
+            return contactsList
         }
 
         fun getContactName(phoneNumber: String?, context: Context): String? {
@@ -152,7 +230,7 @@ class SmsContract {
                         values.put("read", true)
                         context.contentResolver.update(
                             Uri.parse("content://sms/inbox"),
-                                values,
+                            values,
                             "_id=$SmsMessageId",
                             null
                         )
@@ -167,7 +245,12 @@ class SmsContract {
             cursor?.close()
         }
 
-        fun sendMySMS(message: String, phoneNumber: String, context: Context) {
+        fun sendMySMS(
+            message: String,
+            phoneNumber: String,
+            context: Context,
+            isNewConversation: Boolean = false
+        ) {
             val sms = SmsManager.getDefault()
             // if message length is too long messages are divided
             val messages = sms.divideMessage(message)
@@ -178,7 +261,9 @@ class SmsContract {
                     PendingIntent.getBroadcast(context, 0, Intent("SMS_DELIVERED"), 0)
                 sms.sendTextMessage(phoneNumber, null, msg, sentIntent, deliveredIntent)
             }
-            putSmsToSentDatabase(message, phoneNumber, context)
+
+            if (!isNewConversation)
+                putSmsToSentDatabase(message, phoneNumber, context)
         }
 
 

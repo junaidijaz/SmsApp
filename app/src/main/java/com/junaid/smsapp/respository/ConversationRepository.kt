@@ -43,6 +43,7 @@ class ConversationRepository(private val conversationDao: ConversationDao) {
 
     suspend fun deleteConversation(threadId: String) {
         conversationDao.deleteConversation(threadId)
+
     }
 
     suspend fun blockAddress(flag: Boolean, phoneNo: String) {

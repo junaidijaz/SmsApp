@@ -12,5 +12,6 @@ class ComposeRepository(private val conversationDao: ConversationDao) {
 
     }
 
+
     suspend fun getContactName(address : String) = conversationDao.getContactName(address)
 }

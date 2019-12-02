@@ -36,7 +36,7 @@ interface ConversationDao {
     suspend fun deleteConversation(threadId: String)
 
     @Query("SELECT threadId FROM Conversation where address = :address")
-    fun getThreadId(address: String): String
+    fun getThreadId(address: String): String?
 
     @Query("Update conversation set isBlocked = :flag where address = :address")
     suspend fun blockAddress(flag: Boolean, address: String)

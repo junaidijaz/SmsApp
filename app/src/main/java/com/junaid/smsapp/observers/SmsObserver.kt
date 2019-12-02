@@ -1,20 +1,19 @@
 package com.junaid.smsapp.observers
 
-import android.telephony.PhoneNumberUtils
-import android.provider.Telephony
 import android.content.ContentResolver
 import android.content.Context
 import android.database.ContentObserver
 import android.database.Cursor
 import android.net.Uri
 import android.os.Handler
+import android.provider.Telephony
 
 
 class SmsObserver(context: Context, address: String, body: String) : ContentObserver(handler) {
 
     companion object {
         private val handler = Handler()
-        private val uri = Uri.parse("content://sms/")
+        private val uri = Uri.parse("content://sms/sent")
     }
 
     private val context: Context
@@ -43,6 +42,7 @@ class SmsObserver(context: Context, address: String, body: String) : ContentObse
     fun start() {
         if (resolver != null) {
             resolver.registerContentObserver(uri, true, this)
+
         } else {
             throw IllegalStateException(
                 "Current SmsObserver instance is invalid"
@@ -62,7 +62,7 @@ class SmsObserver(context: Context, address: String, body: String) : ContentObse
                 )
 
                 if (type == Telephony.Sms.Sent.MESSAGE_TYPE_SENT) {
-                    val address = cursor.getString(
+                    var address = cursor.getString(
                         cursor.getColumnIndex(Telephony.Sms.ADDRESS)
                     )
                     val body = cursor.getString(
@@ -75,8 +75,14 @@ class SmsObserver(context: Context, address: String, body: String) : ContentObse
                     val smsId = cursor.getString(
                         cursor.getColumnIndex(Telephony.Sms._ID)
                     )
+                    if(address.contains("+92")) {
+                        address = address.replace("+92", "0")
+                    }
+                    if(address.contains(" "))
+                        address = address.replace(" ","")
 
-                    if (PhoneNumberUtils.compare(address, this.address) && body == this.body) {
+//                                && body == this.body
+                    if (address == this.address ) {
 
                         (context as OnSmsSentListener).onSmsSent(threadId,smsId)
                         resolver.unregisterContentObserver(this)

@@ -26,8 +26,10 @@ import com.junaid.smsapp.NotificationHelper
 import com.junaid.smsapp.R
 import com.junaid.smsapp.adapters.ConversationAdapter
 import com.junaid.smsapp.adapters.ItemCLickListener
+import com.junaid.smsapp.model.ContactAddress
 import com.junaid.smsapp.model.Conversation
 import com.junaid.smsapp.ui.ComposeActivity
+import com.junaid.smsapp.ui.viewmodel.ContactsViewModel
 import com.junaid.smsapp.ui.viewmodel.ConversationViewModel
 import com.junaid.smsapp.utils.MyPreference
 import com.junaid.smsapp.utils.SmsContract
@@ -36,8 +38,11 @@ import kotlinx.android.synthetic.main.fragment_inbox.view.*
 class InboxFragment : Fragment() {
 
     private lateinit var conversationViewModel: ConversationViewModel
+    private lateinit var contactsViewModel: ContactsViewModel
     private lateinit var mRecentlyDeletedItem: Conversation
     private var mRecentlyDeletedItemPosition = -1
+    private var recipients = ArrayList<String>()
+
 
     private val appPermissions = arrayOf(
         Manifest.permission.READ_SMS,
@@ -60,6 +65,7 @@ class InboxFragment : Fragment() {
         mView = inflater.inflate(R.layout.fragment_inbox, container, false)
 
         conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
+        contactsViewModel = ViewModelProvider(this).get(ContactsViewModel::class.java)
         conversationViewModel.allConversation.observe(viewLifecycleOwner, Observer {
             it?.let {
                 convoList.clear()
@@ -69,6 +75,17 @@ class InboxFragment : Fragment() {
             }
         })
 
+        mView.fabNewSms.setOnClickListener {
+            recipients.clear()
+            for(item in convoList)
+            {
+                recipients.add(item.address)
+            }
+            val intent = Intent(requireContext(),ComposeActivity::class.java)
+            intent.putStringArrayListExtra("recipients",recipients)
+            intent.putExtra("fromFab","new")
+            startActivity(intent)
+        }
 
         /**check for app permissions
          * in case one or more permissions are not granted
@@ -96,7 +113,8 @@ class InboxFragment : Fragment() {
     /**
      *this function will detect text change in edit text and query required sms
      */
-    private fun setInboxTextChangesLis() {
+    private fun
+            setInboxTextChangesLis() {
 //        toolbarSearch.addTextChangedListener {
 //            refreshConversationList(it.toString())
 //        }
@@ -172,6 +190,11 @@ class InboxFragment : Fragment() {
         if (MyPreference.getInstance(requireContext())?.getData("syncingFirstTime") == "")
             conversationViewModel.insertAllConversation(getAllSms(query))
 
+        syncContacts()
+    }
+
+    private fun syncContacts() {
+        contactsViewModel.insertContacts()
     }
 
     private fun buildSmsRecyclerView() {
@@ -266,76 +289,6 @@ class InboxFragment : Fragment() {
     }
 
 
-    private fun getAllSms(filter: String? = null): ArrayList<Conversation> {
-
-        val lstSms = ArrayList<Conversation>()
-        var selectionArgs: Array<String>? = null
-        var selection: String? = null
-
-        if (!filter.isNullOrEmpty()) {
-            selection = SmsContract.SMS_SELECTION_SEARCH
-            selectionArgs = arrayOf("%$filter%", "%$filter%")
-        }
-
-        val cr = activity?.contentResolver
-        val c =
-            cr?.query(
-                SmsContract.ALL_SMS_URI,
-                null,
-                selection,
-                selectionArgs,
-                SmsContract.SORT_DESC
-            )
-        val totalSMS = c!!.count
-
-        if (c.moveToFirst()) {
-            for (i in 0 until totalSMS) {
-                val objSms = Conversation()
-                objSms.id = c.getString(c.getColumnIndexOrThrow("_id"))
-                //number of conversation
-                objSms.address = c.getString(c.getColumnIndexOrThrow(SmsContract.ADDRESS)) ?: ""
-                objSms.msg = c.getString(c.getColumnIndexOrThrow(SmsContract.BODY))
-                objSms.threadId = c.getString(c.getColumnIndexOrThrow(SmsContract.THREADID))
-                //1 if msg is read
-                objSms.readState = c.getString(c.getColumnIndex(SmsContract.READ))
-                objSms.time = c.getString(c.getColumnIndexOrThrow(SmsContract.DATE))
-
-                if (c.getString(c.getColumnIndexOrThrow("type")).contains("1")) {
-                    objSms.folderName = "inbox"
-                } else {
-                    objSms.folderName = "sent"
-                }
-
-
-
-                if (objSms.address != "") {
-                    lstSms.add(objSms)
-                }
-
-
-                c.moveToNext()
-            }
-        }
-        // else {
-        // throw new RuntimeException("You have no SMS");
-        // }
-
-        c.close()
-
-
-
-
-        for (i in lstSms.indices) {
-            if (lstSms[i].address != "") {
-                if (lstSms[i].address.contains("+92")) {
-                    lstSms[i].address = lstSms[i].address.replace("+92", "0")
-                }
-            }
-        }
-        return ArrayList(LinkedHashSet<Conversation>(lstSms))
-    }
-
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -405,8 +358,6 @@ class InboxFragment : Fragment() {
                             }, false
                         )
                     }
-
-
                 }
             } else {
                 askForDefaultSms()
@@ -423,6 +374,73 @@ class InboxFragment : Fragment() {
         if (requestCode == 1 && resultCode == Activity.RESULT_OK) {
             askForDefaultSms()
         }
+    }
+
+
+    private fun getAllSms(filter: String? = null): ArrayList<Conversation> {
+
+        val lstSms = ArrayList<Conversation>()
+        var selectionArgs: Array<String>? = null
+        var selection: String? = null
+
+        if (!filter.isNullOrEmpty()) {
+            selection = SmsContract.SMS_SELECTION_SEARCH
+            selectionArgs = arrayOf("%$filter%", "%$filter%")
+        }
+
+        val cr = activity?.contentResolver
+        val c =
+            cr?.query(
+                SmsContract.ALL_SMS_URI,
+                null,
+                selection,
+                selectionArgs,
+                SmsContract.SORT_DESC
+            )
+        val totalSMS = c!!.count
+
+        if (c.moveToFirst()) {
+            for (i in 0 until totalSMS) {
+                val objSms = Conversation()
+                objSms.id = c.getString(c.getColumnIndexOrThrow("_id"))
+                //number of conversation
+                objSms.address = c.getString(c.getColumnIndexOrThrow(SmsContract.ADDRESS)) ?: ""
+                objSms.msg = c.getString(c.getColumnIndexOrThrow(SmsContract.BODY))
+                objSms.threadId = c.getString(c.getColumnIndexOrThrow(SmsContract.THREADID))
+                //1 if msg is read
+                objSms.readState = c.getString(c.getColumnIndex(SmsContract.READ))
+                objSms.time = c.getString(c.getColumnIndexOrThrow(SmsContract.DATE))
+
+                if (c.getString(c.getColumnIndexOrThrow("type")).contains("1")) {
+                    objSms.folderName = "inbox"
+                } else {
+                    objSms.folderName = "sent"
+                }
+
+
+
+                if (objSms.address != "") {
+                    lstSms.add(objSms)
+                }
+
+
+                c.moveToNext()
+            }
+        }
+        // else {
+        // throw new RuntimeException("You have no SMS");
+        // }
+
+        c.close()
+
+        for (i in lstSms.indices) {
+            if (lstSms[i].address != "") {
+                if (lstSms[i].address.contains("+92")) {
+                    lstSms[i].address = lstSms[i].address.replace("+92", "0")
+                }
+            }
+        }
+        return ArrayList(LinkedHashSet<Conversation>(lstSms))
     }
 
 

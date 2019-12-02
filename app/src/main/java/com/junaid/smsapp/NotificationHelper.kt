@@ -40,7 +40,7 @@ class NotificationHelper {
                 0, activityIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT
             )
-            val threadId = cDao.getThreadId(phoneNo).toInt()
+            val threadId = cDao.getThreadId(phoneNo)?.toInt()
 
             notificationMessages.put(
                 threadId,
@@ -99,7 +99,7 @@ class NotificationHelper {
 
             val notificationManager = NotificationManagerCompat.from(context)
             notificationManager.notify(
-                cDao.getThreadId(phoneNo).toInt(),
+                cDao.getThreadId(phoneNo)!!.toInt(),
                 notification
             )
         }
